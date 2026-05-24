@@ -1,0 +1,24 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-container-high);
+  flex-shrink: 0;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  animation: pulse-live 2s ease-in-out infinite;
+}
+
+.text {
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+}

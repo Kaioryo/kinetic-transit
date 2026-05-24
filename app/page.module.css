@@ -1,0 +1,124 @@
+/* ============================================
+   Page Styles — Main Layout
+   ============================================ */
+
+.container {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface);
+  overflow: hidden;
+}
+
+.main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  padding-top: 64px; /* Header height */
+}
+
+/* --- Map Section (top ~50%) --- */
+.mapSection {
+  position: relative;
+  height: 50%;
+  width: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.mapScrim {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--surface) 85%);
+  pointer-events: none;
+  z-index: 400;
+}
+
+/* --- ETA Section (bottom ~50%) --- */
+.etaSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--surface);
+}
+
+.etaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: var(--space-xl) var(--space-xl) var(--space-lg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.etaLabel {
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+  opacity: 0.7;
+}
+
+.etaTitle {
+  font-family: var(--font-headline);
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-top: 2px;
+}
+
+.etaContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--space-xl) 5rem;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.etaContent::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- Responsive --- */
+@media (min-width: 768px) {
+  .main {
+    flex-direction: row;
+    padding-top: 64px;
+  }
+
+  .mapSection {
+    height: 100%;
+    width: 60%;
+  }
+
+  .etaSection {
+    width: 40%;
+    height: 100%;
+    border-left: 1px solid rgba(130, 184, 164, 0.15);
+  }
+
+  .mapScrim {
+    display: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  .mapSection {
+    width: 65%;
+  }
+
+  .etaSection {
+    width: 35%;
+    max-width: 480px;
+  }
+}

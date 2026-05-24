@@ -1,0 +1,376 @@
+/* ============================================
+   Kinetic Transit — Design System
+   "The Living Blueprint" 
+   ============================================ */
+
+/* --- External CSS --- */
+@import 'leaflet/dist/leaflet.css';
+
+/* --- Google Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap');
+
+/* --- Design Tokens --- */
+:root {
+  /* Primary */
+  --primary: #006945;
+  --primary-dim: #005c3c;
+  --primary-container: #8af5be;
+  --primary-fixed: #8af5be;
+  --primary-fixed-dim: #7ce6b1;
+  --on-primary: #c9ffdf;
+  --on-primary-container: #005c3c;
+  --on-primary-fixed: #00472d;
+
+  /* Secondary */
+  --secondary: #4c5d6e;
+  --secondary-dim: #405162;
+  --secondary-container: #d2e4f9;
+  --secondary-fixed: #d2e4f9;
+  --secondary-fixed-dim: #c4d6eb;
+  --on-secondary: #ebf3ff;
+  --on-secondary-container: #425364;
+
+  /* Tertiary */
+  --tertiary: #006573;
+  --tertiary-dim: #005865;
+  --tertiary-container: #00e0fe;
+  --tertiary-fixed: #00e0fe;
+  --tertiary-fixed-dim: #00d1ed;
+  --on-tertiary: #dbf8ff;
+  --on-tertiary-container: #004b56;
+
+  /* Error */
+  --error: #b31b25;
+  --error-dim: #9f0519;
+  --error-container: #fb5151;
+  --on-error: #ffefee;
+  --on-error-container: #570008;
+
+  /* Surface */
+  --surface: #d9ffef;
+  --surface-dim: #90e5c8;
+  --surface-bright: #d9ffef;
+  --surface-variant: #9eecd0;
+  --surface-tint: #006945;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #bffee6;
+  --surface-container: #b2f6dd;
+  --surface-container-high: #a8f1d7;
+  --surface-container-highest: #9eecd0;
+
+  /* On Surface */
+  --on-surface: #003629;
+  --on-surface-variant: #306554;
+  --on-background: #003629;
+  --background: #d9ffef;
+
+  /* Outline */
+  --outline: #4c816f;
+  --outline-variant: #82b8a4;
+
+  /* Inverse */
+  --inverse-surface: #00120b;
+  --inverse-on-surface: #72a894;
+  --inverse-primary: #8af5be;
+
+  /* Typography */
+  --font-headline: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-label: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.5rem;
+  --space-2xl: 2rem;
+  --space-3xl: 3rem;
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Shadows — tinted, not black */
+  --shadow-ambient: 0px 4px 16px rgba(0, 54, 41, 0.04);
+  --shadow-elevated: 0px 8px 24px rgba(0, 54, 41, 0.06);
+  --shadow-overlay: 0px 12px 32px rgba(0, 54, 41, 0.08);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--on-surface);
+  background-color: var(--surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+  min-height: 100dvh;
+}
+
+::selection {
+  background-color: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+/* --- Typography Scales --- */
+.display-lg {
+  font-family: var(--font-headline);
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.display-sm {
+  font-family: var(--font-headline);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.headline-lg {
+  font-family: var(--font-headline);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.headline-md {
+  font-family: var(--font-headline);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.title-lg {
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.title-md {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.body-lg {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.body-md {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.label-lg {
+  font-family: var(--font-label);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.label-md {
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.label-sm {
+  font-family: var(--font-label);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* --- Animations --- */
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.5); }
+}
+
+@keyframes pulse-marker {
+  0% { box-shadow: 0 0 0 0 rgba(0, 105, 69, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(0, 105, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 105, 69, 0); }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-pulse-live {
+  animation: pulse-live 2s ease-in-out infinite;
+}
+
+.animate-pulse-marker {
+  animation: pulse-marker 2s ease-out infinite;
+}
+
+/* --- Glassmorphism Utility --- */
+.glass {
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-surface {
+  background-color: rgba(217, 255, 239, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* --- Gradient Utilities --- */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+}
+
+.gradient-scrim {
+  background: linear-gradient(to bottom, transparent, var(--surface) 80%);
+}
+
+/* --- No Scrollbar --- */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --- Leaflet Overrides --- */
+.leaflet-container {
+  background-color: var(--surface-container-highest) !important;
+  font-family: var(--font-body) !important;
+}
+
+.leaflet-control-attribution {
+  font-size: 0.5625rem !important;
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: var(--shadow-elevated) !important;
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden;
+}
+
+.leaflet-control-zoom a {
+  background-color: var(--surface-container-lowest) !important;
+  color: var(--primary) !important;
+  border: none !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 1.125rem !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: var(--surface-container-low) !important;
+}
+
+/* --- Bus Marker Styles --- */
+.bus-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 2px 6px rgba(0, 54, 41, 0.2));
+}
+
+.bus-marker-label {
+  font-family: var(--font-headline);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.bus-marker-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--surface-container-lowest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  animation: pulse-marker 2s ease-out infinite;
+}
+
+/* --- Material Symbols --- */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.material-symbols-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}

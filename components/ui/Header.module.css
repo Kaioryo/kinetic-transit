@@ -1,0 +1,71 @@
+/* ============================================
+   Header — Fixed top navigation
+   Glassmorphism background
+   ============================================ */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--space-xl);
+  height: 64px;
+  background-color: rgba(217, 255, 239, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  /* Ghost border at bottom */
+  border-bottom: 1px solid rgba(130, 184, 164, 0.1);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  letter-spacing: -0.01em;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.iconButton {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.iconButton:hover {
+  background-color: rgba(191, 254, 230, 0.5);
+}
+
+.iconButton:active {
+  transform: scale(0.92);
+}
