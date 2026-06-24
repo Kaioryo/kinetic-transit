@@ -89,12 +89,16 @@ export default function BusMarker({ shuttle }: BusMarkerProps) {
             {shuttle.route_code} — {shuttle.route_name}
           </strong>
           <br />
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+            {shuttle.bus_name}
+          </span>
+          <br />
           <span style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>
             Speed: {shuttle.speed_kmh} km/h
           </span>
           <br />
-          <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
-            {shuttle.id}
+          <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>
+            {shuttle.license_plate}
           </span>
         </div>
       </Popup>

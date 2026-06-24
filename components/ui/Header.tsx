@@ -1,6 +1,7 @@
 'use client'
 
 import styles from './Header.module.css'
+import AboutModal from './AboutModal'
 
 export default function Header() {
   return (
@@ -44,6 +45,7 @@ export default function Header() {
             <path d="M20 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
+        <AboutModal />
       </div>
     </header>
   )
