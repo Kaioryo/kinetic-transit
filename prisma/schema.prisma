@@ -53,10 +53,23 @@ model route_stops {
   @@index([stop_id], map: "fk_route_stops_stop")
 }
 
+model eta_logs {
+  id                Int       @id @default(autoincrement())
+  trip_id           Int
+  stop_id           Int
+  predicted_at      DateTime  @default(now()) @db.Timestamp(0) // kapan prediksi dibuat (saat bus berangkat dari halte sebelumnya)
+  predicted_arrival DateTime  @db.Timestamp(0)                 // ETA absolut hasil prediksi
+  actual_arrival    DateTime? @db.Timestamp(0)                 // diisi saat bus benar-benar tiba di halte
+  error_seconds     Int?                                       // actual - predicted (detik); + = telat, - = lebih cepat
+
+  @@index([trip_id, stop_id], map: "idx_eta_logs_trip_stop")
+}
+
 model routes {
   id          Int           @id @default(autoincrement())
   name        String        @db.VarChar(100)
   description String?       @db.Text
+  waypoints   Json?         // Polyline jalan asli (array {lat,lng}) hasil OSRM — untuk ETA sepanjang rute
   created_at  DateTime?     @default(now()) @db.Timestamp(0)
   route_stops route_stops[]
   trips       trips[]

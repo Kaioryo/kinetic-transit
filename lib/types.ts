@@ -9,7 +9,10 @@ export interface GPSPosition {
 
 export interface Shuttle {
   id: string
-  route_id: string
+  trip_id: number
+  bus_name: string
+  license_plate: string
+  route_id: number
   route_name: string
   route_code: string
   latitude: number
@@ -40,11 +43,11 @@ export interface Route {
 
 export interface ETAInfo {
   shuttle_id: string
-  route_id: string
+  route_id: number
   route_code: string
   route_name: string
   route_type: string
-  stop_id: string
+  stop_id: number
   stop_name: string
   eta_minutes: number
   distance_km: number

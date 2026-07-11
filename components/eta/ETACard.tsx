@@ -9,7 +9,8 @@ interface ETACardProps {
 }
 
 export default function ETACard({ eta, index }: ETACardProps) {
-  const isPrimary = eta.route_id === 'JTN-01'
+  // Rute utama (Main Line) diberi aksen warna primary; rute lain sekunder.
+  const isPrimary = eta.route_type === 'Main Line'
 
   return (
     <div

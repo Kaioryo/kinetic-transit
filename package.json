@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "mqtt-bridge": "node --env-file=.env scripts/mqtt-bridge.mjs"
+    "mqtt-bridge": "node --env-file=.env scripts/mqtt-bridge.mjs",
+    "dummy-bus": "node --env-file=.env scripts/dummy-bus.mjs",
+    "fetch-waypoints": "node --env-file=.env scripts/fetch-route-waypoints.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

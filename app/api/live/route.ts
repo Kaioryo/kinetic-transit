@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { computeEtas, parseWaypoints } from '@/lib/eta-engine.mjs'
 
-// GET /api/live — Query active trips with latest bus locations and ETAs
+// GET /api/live — Query active trips + latest location, and compute ETAs on-read.
+//
+// ETA dihitung langsung saat request (bukan disimpan ke tabel `etas`), sehingga
+// selalu segar. Perhitungan jarak/ETA memakai lib/eta-engine.mjs (sumber tunggal,
+// dipakai juga oleh eta-logger untuk evaluasi akurasi):
+//   - SEPANJANG POLYLINE JALAN ASLI (routes.waypoints dari OSRM) bila tersedia,
+//   - atau FALLBACK ke jarak garis-lurus antar halte (× road factor) bila belum.
+// Untuk rute melingkar, halte yang baru dilewati otomatis "jauh" satu putaran.
 
-// Types for Prisma query results
-type TripWithRelations = Prisma.tripsGetPayload<{
+const DEFAULT_SPEED_KMH = 15
+
+type TripWithRoute = Prisma.tripsGetPayload<{
   include: {
     buses: true
     routes: {
@@ -16,20 +25,13 @@ type TripWithRelations = Prisma.tripsGetPayload<{
         }
       }
     }
-    etas: {
-      include: { stops: true }
-    }
   }
-}>
-
-type ETAWithStop = Prisma.etasGetPayload<{
-  include: { stops: true }
 }>
 
 export async function GET() {
   try {
-    // 1. Get all active trips with related data
-    const activeTrips: TripWithRelations[] = await prisma.trips.findMany({
+    // 1. Ambil semua trip aktif + bus + rute (+ waypoints) + halte (terurut).
+    const activeTrips: TripWithRoute[] = await prisma.trips.findMany({
       where: { status: 'active' },
       include: {
         buses: true,
@@ -41,31 +43,88 @@ export async function GET() {
             },
           },
         },
-        etas: {
-          include: { stops: true },
-        },
       },
     })
 
-    // 2. Get latest bus_location for each active trip
+    const etas: Array<{
+      shuttle_id: string
+      route_id: number
+      route_code: string
+      route_name: string
+      route_type: string
+      stop_id: number
+      stop_name: string
+      eta_minutes: number
+      distance_km: number
+      shuttle_speed: number
+      status: 'on-time' | 'delayed' | 'arriving'
+    }> = []
+
+    // 2. Untuk tiap trip: ambil lokasi terbaru, lalu bangun shuttle + hitung ETA.
     const shuttles = await Promise.all(
-      activeTrips.map(async (trip: TripWithRelations) => {
+      activeTrips.map(async (trip) => {
         const latestLocation = await prisma.bus_locations.findFirst({
           where: { trip_id: trip.id },
           orderBy: { recorded_at: 'desc' },
         })
 
+        const busLat = latestLocation ? Number(latestLocation.latitude) : 0
+        const busLng = latestLocation ? Number(latestLocation.longitude) : 0
+        const rawSpeed = latestLocation ? Number(latestLocation.speed ?? 0) : 0
+        const speedForEta = rawSpeed > 0 ? rawSpeed : DEFAULT_SPEED_KMH
+
+        const shuttleId = `shuttle_${trip.buses.id}`
+        const routeType = trip.route_id === 1 ? 'Main Line' : 'Express'
+
+        const orderedStops = trip.routes.route_stops
+        if (latestLocation && orderedStops.length > 0) {
+          const stopPts = orderedStops.map((rs) => ({
+            stop_id: rs.stop_id,
+            name: rs.stops.name,
+            lat: Number(rs.stops.latitude),
+            lng: Number(rs.stops.longitude),
+          }))
+          const waypoints = parseWaypoints(trip.routes.waypoints)
+
+          const computed = computeEtas({
+            busLat,
+            busLng,
+            speedKmh: speedForEta,
+            stops: stopPts,
+            waypoints,
+          })
+
+          for (const c of computed) {
+            const status: 'on-time' | 'delayed' | 'arriving' =
+              c.etaMinutes <= 1 ? 'arriving' : rawSpeed > 0 && rawSpeed < 8 ? 'delayed' : 'on-time'
+
+            etas.push({
+              shuttle_id: shuttleId,
+              route_id: trip.routes.id,
+              route_code: `R${trip.routes.id}`,
+              route_name: trip.routes.name,
+              route_type: routeType,
+              stop_id: c.stop_id,
+              stop_name: c.name,
+              eta_minutes: c.etaMinutes,
+              distance_km: Math.round(c.distanceKm * 100) / 100,
+              shuttle_speed: Math.round(rawSpeed * 10) / 10,
+              status,
+            })
+          }
+        }
+
         return {
-          id: `shuttle_${trip.buses.id}`,
+          id: shuttleId,
           trip_id: trip.id,
           bus_name: trip.buses.name,
           license_plate: trip.buses.license_plate,
           route_id: trip.routes.id,
           route_name: trip.routes.name,
           route_code: `R${trip.routes.id}`,
-          latitude: latestLocation ? Number(latestLocation.latitude) : 0,
-          longitude: latestLocation ? Number(latestLocation.longitude) : 0,
-          speed_kmh: latestLocation ? Number(latestLocation.speed || 0) : 0,
+          latitude: busLat,
+          longitude: busLng,
+          speed_kmh: rawSpeed,
           heading: 0,
           timestamp: latestLocation?.recorded_at?.getTime() || Date.now(),
           status: trip.status as 'active' | 'inactive',
@@ -73,34 +132,10 @@ export async function GET() {
       })
     )
 
-    // 3. Build ETA list from etas table
-    const etas = activeTrips.flatMap((trip: TripWithRelations) =>
-      trip.etas.map((eta: ETAWithStop) => {
-        const now = new Date()
-        const arrivalTime = new Date(eta.estimated_arrival)
-        const diffMs = arrivalTime.getTime() - now.getTime()
-        const etaMinutes = Math.max(1, Math.round(diffMs / 60000))
+    // Urutkan ETA dari yang paling dekat.
+    etas.sort((a, b) => a.eta_minutes - b.eta_minutes)
 
-        return {
-          shuttle_id: `shuttle_${trip.buses.id}`,
-          route_id: trip.routes.id,
-          route_code: `R${trip.routes.id}`,
-          route_name: trip.routes.name,
-          route_type: trip.route_id === 1 ? 'Main Line' : 'Express',
-          stop_id: eta.stop_id,
-          stop_name: eta.stops.name,
-          eta_minutes: etaMinutes,
-          distance_km: 0,
-          shuttle_speed: 0,
-          status: etaMinutes <= 1 ? 'arriving' as const : etaMinutes > 15 ? 'delayed' as const : 'on-time' as const,
-        }
-      })
-    )
-
-    // Sort ETAs by time ascending
-    etas.sort((a: { eta_minutes: number }, b: { eta_minutes: number }) => a.eta_minutes - b.eta_minutes)
-
-    // 4. Get all stops
+    // 3. Semua halte (untuk overlay peta).
     const stops = await prisma.stops.findMany()
 
     return NextResponse.json({

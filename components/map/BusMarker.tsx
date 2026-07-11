@@ -28,10 +28,11 @@ function createBusIcon(routeCode: string, color: string): L.DivIcon {
   })
 }
 
-function getRouteColor(routeId: string): string {
-  const colors: Record<string, string> = {
-    'JTN-01': '#006945',
-    'JTN-02': '#4c5d6e',
+function getRouteColor(routeId: number): string {
+  const colors: Record<number, string> = {
+    1: '#006945', // Jalur A (Main Line)
+    2: '#4c5d6e', // Jalur B
+    3: '#b5651d', // Jalur C
   }
   return colors[routeId] || '#006945'
 }

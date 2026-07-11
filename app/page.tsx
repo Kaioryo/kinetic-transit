@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useTransitStore } from '@/lib/store'
 import LiveMap from '@/components/map/LiveMap'
 import ETACardList from '@/components/eta/ETACardList'
@@ -12,39 +12,13 @@ export default function Home() {
   const tick = useTransitStore((state) => state.tick)
   const etas = useTransitStore((state) => state.etas)
   const shuttles = useTransitStore((state) => state.shuttles)
-  const isSeeded = useTransitStore((state) => state.isSeeded)
-  const seedDatabase = useTransitStore((state) => state.seedDatabase)
-  const mode = useTransitStore((state) => state.mode)
-  
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // One-time start mechanism
+  // Polling data live dari /api/live setiap 3 detik.
   useEffect(() => {
-    let mounted = true
-
-    const initiateTracker = async () => {
-      if (mode === 'mysql' && !isSeeded) {
-        await seedDatabase()
-      }
-      
-      if (mounted) {
-        // Initial tick
-        tick()
-
-        // Set interval
-        intervalRef.current = setInterval(() => {
-          tick()
-        }, 3000)
-      }
-    }
-
-    initiateTracker()
-
-    return () => {
-      mounted = false
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [mode, isSeeded]) // seedDatabase & tick are stable
+    tick()
+    const interval = setInterval(tick, 3000)
+    return () => clearInterval(interval)
+  }, [tick])
 
   return (
     <div className={styles.container}>

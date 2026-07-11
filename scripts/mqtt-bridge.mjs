@@ -10,8 +10,36 @@
 
 import mqtt from 'mqtt'
 import { PrismaClient } from '@prisma/client'
+import { createLoggerState, processLocation } from '../lib/eta-logger.mjs'
+import { parseWaypoints } from '../lib/eta-engine.mjs'
 
 const prisma = new PrismaClient()
+const loggerState = createLoggerState()
+
+// Cache data rute (halte terurut + waypoints) per route_id agar tidak query
+// berat tiap pesan. Rute jarang berubah; cache dibuang otomatis tiap 5 menit.
+const routeCache = new Map()
+setInterval(() => routeCache.clear(), 5 * 60 * 1000)
+
+async function getRouteData(routeId) {
+  if (routeCache.has(routeId)) return routeCache.get(routeId)
+  const route = await prisma.routes.findUnique({
+    where: { id: routeId },
+    include: { route_stops: { include: { stops: true }, orderBy: { stop_order: 'asc' } } },
+  })
+  if (!route) return null
+  const data = {
+    stops: route.route_stops.map((rs) => ({
+      stop_id: rs.stop_id,
+      name: rs.stops.name,
+      lat: Number(rs.stops.latitude),
+      lng: Number(rs.stops.longitude),
+    })),
+    waypoints: parseWaypoints(route.waypoints),
+  }
+  routeCache.set(routeId, data)
+  return data
+}
 
 // Konfigurasi MQTT dari .env
 const BROKER_URL = process.env.MQTT_BROKER_URL || 'mqtt://broker.hivemq.com'
@@ -83,7 +111,9 @@ client.on('message', async (topic, messageBuffer) => {
       return
     }
 
-    // 3. Simpan koordinat ke tabel bus_locations
+    // 3. Simpan koordinat ke tabel bus_locations.
+    //    ETA tidak lagi dihitung di sini — cukup simpan lokasi, dan ETA
+    //    dihitung on-read oleh GET /api/live (selalu segar, tidak bisa basi).
     const saved = await prisma.bus_locations.create({
       data: {
         trip_id: activeTrip.id,
@@ -94,63 +124,18 @@ client.on('message', async (topic, messageBuffer) => {
       },
     })
 
-    // 4. Hitung ulang ETA ke setiap halte di rute ini
-    const trip = await prisma.trips.findUnique({
-      where: { id: activeTrip.id },
-      include: {
-        routes: {
-          include: {
-            route_stops: {
-              include: { stops: true },
-              orderBy: { stop_order: 'asc' },
-            },
-          },
-        },
-      },
-    })
-
-    if (trip) {
-      const busLat = parseFloat(latitude)
-      const busLng = parseFloat(longitude)
-      const busSpeed = speed != null ? parseFloat(speed) : 15 // default 15 km/h
-
-      for (const rs of trip.routes.route_stops) {
-        const stopLat = Number(rs.stops.latitude)
-        const stopLng = Number(rs.stops.longitude)
-
-        // Haversine distance
-        const R = 6371
-        const dLat = ((stopLat - busLat) * Math.PI) / 180
-        const dLng = ((stopLng - busLng) * Math.PI) / 180
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos((busLat * Math.PI) / 180) *
-            Math.cos((stopLat * Math.PI) / 180) *
-            Math.sin(dLng / 2) ** 2
-        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 1.3 // road factor
-
-        const etaMinutes = Math.max(1, Math.round((dist / Math.max(busSpeed, 5)) * 60))
-        const estimatedArrival = new Date(Date.now() + etaMinutes * 60000)
-
-        await prisma.etas.upsert({
-          where: {
-            trip_id_stop_id: {
-              trip_id: activeTrip.id,
-              stop_id: rs.stop_id,
-            },
-          },
-          update: {
-            estimated_arrival: estimatedArrival,
-            calculated_at: new Date(),
-          },
-          create: {
-            trip_id: activeTrip.id,
-            stop_id: rs.stop_id,
-            estimated_arrival: estimatedArrival,
-            calculated_at: new Date(),
-          },
-        })
-      }
+    // 4. Catat prediksi & deteksi kedatangan untuk evaluasi akurasi ETA.
+    const routeData = await getRouteData(activeTrip.route_id)
+    if (routeData) {
+      await processLocation(prisma, {
+        tripId: activeTrip.id,
+        lat: parseFloat(latitude),
+        lng: parseFloat(longitude),
+        speed: speed != null ? parseFloat(speed) : 0,
+        stops: routeData.stops,
+        waypoints: routeData.waypoints,
+        state: loggerState,
+      })
     }
 
     console.log(

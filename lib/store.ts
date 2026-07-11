@@ -17,24 +17,20 @@ interface TransitStore {
   shuttles: Shuttle[]
   etas: ETAInfo[]
   stops: StopInfo[]
-  isLive: boolean
   lastUpdate: number
-  isSeeded: boolean
   tick: () => void
-  seedDatabase: () => Promise<void>
 }
 
-export const useTransitStore = create<TransitStore>((set, get) => ({
+export const useTransitStore = create<TransitStore>((set) => ({
   shuttles: [],
   etas: [],
   stops: [],
-  isLive: true,
   lastUpdate: 0,
-  isSeeded: false,
 
   tick: async () => {
-    // Hanya fetch data terbaru dari MySQL via API
-    // Data sudah diisi oleh MQTT Bridge dari ESP32
+    // Hanya fetch data terbaru dari MySQL via API.
+    // Data lokasi diisi oleh MQTT Bridge (ESP32) atau Dummy Bus Simulator;
+    // ETA dihitung on-read oleh /api/live.
     try {
       const res = await fetch('/api/live')
       const data = await res.json()
@@ -49,19 +45,6 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
       }
     } catch (error) {
       console.error('Gagal fetch data live:', error)
-    }
-  },
-
-  seedDatabase: async () => {
-    try {
-      const res = await fetch('/api/seed', { method: 'POST' })
-      const data = await res.json()
-      if (data.success) {
-        set({ isSeeded: true })
-        console.log('Database seeded:', data)
-      }
-    } catch (error) {
-      console.error('Seed error:', error)
     }
   },
 }))
