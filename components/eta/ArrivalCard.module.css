@@ -1,6 +1,5 @@
 /* ============================================
-   ETA Card — The Hero Component
-   Editorial Z-pattern layout
+   Arrival Card — satu bus yang menuju halte terpilih
    ============================================ */
 
 .card {
@@ -14,7 +13,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  cursor: pointer;
   transition:
     transform var(--transition-fast),
     box-shadow var(--transition-normal);
@@ -25,8 +23,51 @@
   box-shadow: var(--shadow-elevated);
 }
 
-.card:active {
-  transform: scale(0.98);
+/* Bus yang baru saja melewati halte ini (dim, penanda pasif) */
+.cardPassed {
+  opacity: 0.55;
+}
+
+/* Bus yang berhenti berkepanjangan (mogok/macet). Sengaja diberi nada peringatan:
+   penumpang harus sadar bus ini TIDAK sedang menuju ke sini. */
+.cardStopped {
+  border-color: rgba(186, 26, 26, 0.25);
+  background-color: rgba(186, 26, 26, 0.04);
+}
+
+/* Pengganti angka ETA saat bus berhenti — teks, bukan angka besar, supaya tidak
+   terbaca sebagai janji waktu. */
+.stoppedLabel {
+  font-family: var(--font-label);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--error, #ba1a1a);
+  text-align: right;
+  line-height: 1.2;
+}
+
+.stoppedSince {
+  font-family: var(--font-label);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  opacity: 0.8;
+  margin-top: 3px;
+  text-align: right;
+}
+
+.nextBadge {
+  display: inline-block;
+  margin-left: 0.5em;
+  padding: 0.1em 0.5em;
+  border-radius: 999px;
+  background-color: var(--primary);
+  color: var(--surface-container-lowest);
+  font-family: var(--font-label);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
 }
 
 /* --- Left: Route badge + info --- */
@@ -34,7 +75,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-xl);
-  min-width: 0; /* Allow text truncation */
+  min-width: 0;
 }
 
 .routeBadge {
@@ -59,7 +100,7 @@
   min-width: 0;
 }
 
-.stopName {
+.busName {
   font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 600;

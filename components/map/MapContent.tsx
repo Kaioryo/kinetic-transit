@@ -48,6 +48,8 @@ function MapUpdater({ shuttles }: { shuttles: Shuttle[] }) {
 export default function MapContent({ shuttles }: MapContentProps) {
   // Ambil stops dari Zustand store (data dari MySQL, bukan mock)
   const stops = useTransitStore((state) => state.stops)
+  const selectedStopId = useTransitStore((state) => state.selectedStopId)
+  const selectStop = useTransitStore((state) => state.selectStop)
 
   return (
     <MapContainer
@@ -64,9 +66,14 @@ export default function MapContent({ shuttles }: MapContentProps) {
 
       <MapUpdater shuttles={shuttles} />
 
-      {/* Stop markers dari database */}
+      {/* Stop markers dari database — tap untuk memilih halte di panel ETA */}
       {stops.map((stop) => (
-        <StopMarker key={stop.id} stop={stop} />
+        <StopMarker
+          key={stop.id}
+          stop={stop}
+          isSelected={stop.id === selectedStopId}
+          onSelect={selectStop}
+        />
       ))}
 
       {/* Shuttle markers */}

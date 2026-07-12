@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import styles from './page.module.css'
 
 // Lazy-load map agar tidak SSR
@@ -12,17 +13,33 @@ const AdminMap = dynamic(() => import('./AdminMap'), { ssr: false, loading: () =
 type Stop = { id: number; name: string; latitude: number | string; longitude: number | string }
 type Bus  = { id: number; name: string; license_plate: string; status: string }
 type Route = { id: number; name: string }
+type Trip = {
+  id: number
+  bus_id: number
+  bus_name: string
+  license_plate: string
+  route_id: number
+  route_name: string
+  status: string
+  started_at: string | null
+  ended_at: string | null
+}
 
 // ── Komponen Utama ─────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'stops' | 'buses'>('stops')
+  const [activeTab, setActiveTab] = useState<'stops' | 'buses' | 'trips'>('stops')
 
   // Data
   const [stops,  setStops]  = useState<Stop[]>([])
   const [buses,  setBuses]  = useState<Bus[]>([])
   const [routes, setRoutes] = useState<Route[]>([])
+  const [trips,  setTrips]  = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Form Perjalanan
+  const [tripForm, setTripForm] = useState({ bus_id: '', route_id: '' })
+  const [tripMsg,  setTripMsg]  = useState('')
 
   // Form Halte
   const [stopForm, setStopForm] = useState({ name: '', latitude: '', longitude: '', route_id: '', stop_order: '' })
@@ -44,15 +61,17 @@ export default function AdminDashboard() {
   const fetchAll = useCallback(async () => {
     setLoading(true)
     try {
-      const [sRes, bRes, rRes] = await Promise.all([
+      const [sRes, bRes, rRes, tRes] = await Promise.all([
         fetch('/api/admin/stops'),
         fetch('/api/admin/buses'),
         fetch('/api/live'),
+        fetch('/api/admin/trips'),
       ])
       if (sRes.status === 401 || bRes.status === 401) { router.push('/admin'); return }
-      const [sData, bData, rData] = await Promise.all([sRes.json(), bRes.json(), rRes.json()])
+      const [sData, bData, rData, tData] = await Promise.all([sRes.json(), bRes.json(), rRes.json(), tRes.json()])
       setStops(sData)
       setBuses(bData)
+      setTrips(Array.isArray(tData) ? tData : [])
       // Ambil data rute dari /api/live (stops sudah include route info)
       const uniqueRoutes: Route[] = []
       const seen = new Set<number>()
@@ -149,6 +168,37 @@ export default function AdminDashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // ── Perjalanan (Trip) ─────────────────────────────────────────────────────
+  async function handleStartTrip(e: React.FormEvent) {
+    e.preventDefault()
+    setTripMsg('')
+    const res = await fetch('/api/admin/trips', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tripForm),
+    })
+    if (res.ok) {
+      setTripMsg('Perjalanan dimulai. Bus akan muncul di peta begitu GPS-nya masuk.')
+      setTripForm({ bus_id: '', route_id: '' })
+      fetchAll()
+    } else {
+      const d = await res.json()
+      setTripMsg(`Error: ${d.error}`)
+    }
+  }
+
+  async function handleEndTrip(tripId: number) {
+    setTripMsg('')
+    const res = await fetch(`/api/admin/trips/${tripId}`, { method: 'PATCH' })
+    if (res.ok) {
+      setTripMsg('Perjalanan diakhiri. Bus tidak lagi ditampilkan ke penumpang.')
+      fetchAll()
+    } else {
+      const d = await res.json()
+      setTripMsg(`Error: ${d.error}`)
+    }
+  }
+
   // ── Hapus ─────────────────────────────────────────────────────────────────
   async function confirmDelete() {
     if (!deleteTarget) return
@@ -178,7 +228,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className={styles.headerRight}>
-          <a href="/" className={styles.linkBtn}>Lihat Peta</a>
+          <Link href="/" className={styles.linkBtn}>Lihat Peta</Link>
           <button onClick={handleLogout} className={styles.logoutBtn}>Logout</button>
         </div>
       </header>
@@ -202,6 +252,13 @@ export default function AdminDashboard() {
               <path d="M4 11H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             Bus ({buses.length})
+          </button>
+          <button className={`${styles.tab} ${activeTab === 'trips' ? styles.tabActive : ''}`} onClick={() => setActiveTab('trips')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+              <path d="M12 7V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Perjalanan ({trips.filter(t => t.status === 'active').length} aktif)
           </button>
         </div>
 
@@ -487,6 +544,121 @@ export default function AdminDashboard() {
                               <button className={styles.editBtn} onClick={() => startEditBus(b)}>Edit</button>
                               <button className={styles.deleteBtn} onClick={() => setDeleteTarget({ type: 'bus', id: b.id, name: b.name })}>Hapus</button>
                             </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
+        {/* ══ TAB PERJALANAN ═════════════════════════════════════════════════ */}
+        {activeTab === 'trips' && (
+          <div className={styles.tabContent}>
+            {/* Mulai Perjalanan Baru */}
+            <section className={styles.formSection}>
+              <h2 className={styles.sectionTitle}>Mulai Perjalanan Baru</h2>
+              <p className={styles.hint} style={{ marginBottom: '1rem' }}>
+                Bus hanya tampil ke penumpang kalau punya perjalanan <strong>aktif</strong>.
+                Tanpa ini, GPS dari ESP32 tetap tersimpan tapi bus tidak muncul di peta maupun ETA.
+              </p>
+
+              <form onSubmit={handleStartTrip} className={styles.form}>
+                <div className={styles.formGrid}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Bus <span className={styles.required}>*</span></label>
+                    <select
+                      className={styles.input}
+                      value={tripForm.bus_id}
+                      onChange={e => setTripForm(f => ({ ...f, bus_id: e.target.value }))}
+                      required
+                    >
+                      <option value="">-- Pilih bus --</option>
+                      {buses.map(b => (
+                        <option key={b.id} value={b.id}>{b.name} ({b.license_plate})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Jalur <span className={styles.required}>*</span></label>
+                    <select
+                      className={styles.input}
+                      value={tripForm.route_id}
+                      onChange={e => setTripForm(f => ({ ...f, route_id: e.target.value }))}
+                      required
+                    >
+                      <option value="">-- Pilih jalur --</option>
+                      {routes.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {tripMsg && (
+                  <p className={`${styles.msg} ${tripMsg.startsWith('Error') ? styles.msgError : styles.msgSuccess}`}>
+                    {tripMsg}
+                  </p>
+                )}
+
+                <div className={styles.formActions}>
+                  <button type="submit" className={styles.saveBtn}>Mulai Perjalanan</button>
+                </div>
+              </form>
+            </section>
+
+            {/* Daftar Perjalanan */}
+            <section className={styles.tableSection}>
+              <h2 className={styles.sectionTitle}>
+                Perjalanan ({trips.filter(t => t.status === 'active').length} aktif)
+              </h2>
+              {loading ? (
+                <div className={styles.loadingRow}>Memuat data...</div>
+              ) : trips.length === 0 ? (
+                <div className={styles.emptyRow}>Belum ada perjalanan.</div>
+              ) : (
+                <div className={styles.tableWrapper}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Bus</th>
+                        <th>Jalur</th>
+                        <th>Status</th>
+                        <th>Mulai</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {trips.map(t => (
+                        <tr key={t.id}>
+                          <td className={styles.tdId}>{t.id}</td>
+                          <td className={styles.tdName}>
+                            {t.bus_name}
+                            <br />
+                            <code className={styles.plateCode}>{t.license_plate}</code>
+                          </td>
+                          <td>{t.route_name}</td>
+                          <td>
+                            <span className={`${styles.statusBadge} ${t.status === 'active' ? styles.status_active : styles.status_inactive}`}>
+                              {t.status}
+                            </span>
+                          </td>
+                          <td className={styles.tdCoord}>
+                            {t.started_at ? new Date(t.started_at).toLocaleString('id-ID') : '—'}
+                          </td>
+                          <td>
+                            {t.status === 'active' ? (
+                              <button className={styles.deleteBtn} onClick={() => handleEndTrip(t.id)}>
+                                Akhiri
+                              </button>
+                            ) : (
+                              <span style={{ opacity: 0.4 }}>—</span>
+                            )}
                           </td>
                         </tr>
                       ))}

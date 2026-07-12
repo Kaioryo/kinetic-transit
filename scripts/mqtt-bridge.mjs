@@ -131,7 +131,6 @@ client.on('message', async (topic, messageBuffer) => {
         tripId: activeTrip.id,
         lat: parseFloat(latitude),
         lng: parseFloat(longitude),
-        speed: speed != null ? parseFloat(speed) : 0,
         stops: routeData.stops,
         waypoints: routeData.waypoints,
         state: loggerState,

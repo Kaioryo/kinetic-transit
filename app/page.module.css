@@ -20,12 +20,12 @@
   padding-top: 64px; /* Header height */
 }
 
-/* --- Map Section (top ~50%) --- */
+/* --- Map Section: mengambil SISA ruang setelah panel --- */
 .mapSection {
   position: relative;
-  height: 50%;
+  flex: 1 1 auto;
+  min-height: 180px; /* peta tidak boleh tergencet habis */
   width: 100%;
-  flex-shrink: 0;
   overflow: hidden;
 }
 
@@ -40,22 +40,49 @@
   z-index: 400;
 }
 
-/* --- ETA Section (bottom ~50%) --- */
+/* --- ETA Section: menyusut mengikuti tinggi kontennya (tidak lagi 50% tetap).
+       --panel-h di-set inline saat user menarik handle; default `auto`. --- */
 .etaSection {
-  flex: 1;
+  flex: 0 0 auto;
+  height: var(--panel-h, auto);
+  max-height: 75dvh;
+  min-height: 84px; /* cukup untuk header saat dikecilkan penuh */
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background-color: var(--surface);
 }
 
+/* --- Handle untuk menarik/mengubah tinggi panel (mobile) --- */
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) 0 var(--space-xs);
+  cursor: ns-resize;
+  touch-action: none; /* supaya drag tidak ikut men-scroll halaman */
+  flex-shrink: 0;
+}
+
+.dragHandleBar {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background-color: var(--on-surface-variant);
+  opacity: 0.3;
+  transition: opacity var(--transition-fast);
+}
+
+.dragHandle:hover .dragHandleBar {
+  opacity: 0.55;
+}
+
 .etaHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: var(--space-xl) var(--space-xl) var(--space-lg);
-  position: sticky;
-  top: 0;
+  padding: var(--space-sm) var(--space-xl) var(--space-lg);
+  flex-shrink: 0;
   z-index: 10;
 }
 
@@ -75,12 +102,51 @@
   font-weight: 700;
   color: var(--on-surface);
   margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etaHeaderText {
+  min-width: 0; /* izinkan nama halte panjang untuk truncate */
+}
+
+.etaHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+
+.changeStopBtn {
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  background-color: rgba(0, 105, 69, 0.1);
+  border: none;
+  border-radius: 999px;
+  padding: var(--space-sm) var(--space-lg);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.changeStopBtn:hover:not(:disabled) {
+  background-color: rgba(0, 105, 69, 0.2);
+}
+
+.changeStopBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .etaContent {
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
-  padding: 0 var(--space-xl) 5rem;
+  /* Padding bawah secukupnya — dulu 5rem, bikin panel punya ruang kosong besar. */
+  padding: 0 var(--space-xl) var(--space-xl);
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -99,12 +165,26 @@
   .mapSection {
     height: 100%;
     width: 60%;
+    min-height: 0;
   }
 
+  /* Di desktop panel jadi sidebar penuh — abaikan tinggi dinamis mobile
+     (--panel-h) beserta clamp-nya. */
   .etaSection {
     width: 40%;
     height: 100%;
+    max-height: none;
+    min-height: 0;
     border-left: 1px solid rgba(130, 184, 164, 0.15);
+  }
+
+  /* Resize hanya relevan di layout bertumpuk (mobile). */
+  .dragHandle {
+    display: none;
+  }
+
+  .etaHeader {
+    padding-top: var(--space-xl);
   }
 
   .mapScrim {

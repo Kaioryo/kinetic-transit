@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import styles from './page.module.css'
 
 export default function AdminLoginPage() {
@@ -92,7 +93,7 @@ export default function AdminLoginPage() {
         </form>
 
         <p className={styles.backLink}>
-          <a href="/">← Kembali ke peta</a>
+          <Link href="/">← Kembali ke peta</Link>
         </p>
       </div>
     </div>

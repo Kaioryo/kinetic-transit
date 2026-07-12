@@ -1,17 +1,60 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTransitStore } from '@/lib/store'
+import { useUserLocation } from '@/lib/useUserLocation'
+import { haversineDistance } from '@/lib/geo-utils'
 import LiveMap from '@/components/map/LiveMap'
-import ETACardList from '@/components/eta/ETACardList'
+import ArrivalList from '@/components/eta/ArrivalList'
+import StopPicker from '@/components/eta/StopPicker'
 import Header from '@/components/ui/Header'
 import StatusChip from '@/components/ui/StatusChip'
 import styles from './page.module.css'
 
 export default function Home() {
   const tick = useTransitStore((state) => state.tick)
-  const etas = useTransitStore((state) => state.etas)
   const shuttles = useTransitStore((state) => state.shuttles)
+  const stops = useTransitStore((state) => state.stops)
+  const stopEtas = useTransitStore((state) => state.stopEtas)
+  const selectedStopId = useTransitStore((state) => state.selectedStopId)
+  const stopPickedManually = useTransitStore((state) => state.stopPickedManually)
+  const selectStop = useTransitStore((state) => state.selectStop)
+
+  const { location, status: geoStatus } = useUserLocation()
+  const [pickerOpen, setPickerOpen] = useState(false)
+
+  // Tinggi panel ETA (mobile). null = otomatis mengikuti tinggi konten.
+  // Di-set lewat CSS custom property agar tidak menabrak layout sidebar desktop.
+  const [panelHeight, setPanelHeight] = useState<number | null>(null)
+  const etaSectionRef = useRef<HTMLElement | null>(null)
+  const dragRef = useRef<{ startY: number; startHeight: number } | null>(null)
+
+  const handleDragStart = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const section = etaSectionRef.current
+    if (!section) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragRef.current = {
+      startY: e.clientY,
+      startHeight: section.getBoundingClientRect().height,
+    }
+  }, [])
+
+  const handleDragMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag) return
+    // Tarik ke ATAS = panel membesar, jadi selisihnya dibalik.
+    const next = drag.startHeight - (e.clientY - drag.startY)
+    const max = window.innerHeight * 0.75
+    setPanelHeight(Math.min(Math.max(next, 84), max))
+  }, [])
+
+  const handleDragEnd = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    dragRef.current = null
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }, [])
+
+  // Klik ganda pada handle → kembalikan ke tinggi otomatis (mengikuti konten).
+  const resetPanelHeight = useCallback(() => setPanelHeight(null), [])
 
   // Polling data live dari /api/live setiap 3 detik.
   useEffect(() => {
@@ -19,6 +62,46 @@ export default function Home() {
     const interval = setInterval(tick, 3000)
     return () => clearInterval(interval)
   }, [tick])
+
+  // Pilih halte TERDEKAT secara otomatis dari posisi user.
+  // Tidak menimpa kalau user sudah memilih haltenya sendiri.
+  useEffect(() => {
+    if (!location || stops.length === 0 || stopPickedManually) return
+
+    let nearest = stops[0]
+    let minDist = Infinity
+    for (const s of stops) {
+      const d = haversineDistance(location.lat, location.lng, s.latitude, s.longitude)
+      if (d < minDist) {
+        minDist = d
+        nearest = s
+      }
+    }
+    selectStop(nearest.id, false)
+  }, [location, stops, stopPickedManually, selectStop])
+
+  const selectedStop = useMemo(
+    () => stops.find((s) => s.id === selectedStopId) ?? null,
+    [stops, selectedStopId]
+  )
+
+  const selectedStopEta = useMemo(
+    () => stopEtas.find((s) => s.stop_id === selectedStopId) ?? null,
+    [stopEtas, selectedStopId]
+  )
+
+  const servedStopIds = useMemo(() => new Set(stopEtas.map((s) => s.stop_id)), [stopEtas])
+
+  // Label kecil di atas nama halte — menjelaskan ASAL pilihan haltenya.
+  const stopLabel = stopPickedManually
+    ? 'Halte Dipilih'
+    : geoStatus === 'granted'
+      ? 'Halte Terdekat'
+      : geoStatus === 'denied'
+        ? 'Lokasi Ditolak — Pilih Manual'
+        : geoStatus === 'loading'
+          ? 'Mencari Lokasi…'
+          : 'Pilih Halte'
 
   return (
     <div className={styles.container}>
@@ -28,25 +111,68 @@ export default function Home() {
         {/* Map Section — Top 50% */}
         <section className={styles.mapSection}>
           <LiveMap shuttles={shuttles} />
-          {/* Tonal Transition Scrim */}
           <div className={styles.mapScrim} />
         </section>
 
-        {/* ETA Panel — Bottom 50% */}
-        <section className={styles.etaSection}>
+        {/* ETA Panel — hanya menampilkan SATU halte (terdekat / dipilih).
+            Tingginya mengikuti konten; user bisa menariknya lewat handle. */}
+        <section
+          ref={etaSectionRef}
+          className={styles.etaSection}
+          style={
+            { '--panel-h': panelHeight != null ? `${panelHeight}px` : 'auto' } as React.CSSProperties
+          }
+        >
+          <div
+            className={styles.dragHandle}
+            onPointerDown={handleDragStart}
+            onPointerMove={handleDragMove}
+            onPointerUp={handleDragEnd}
+            onPointerCancel={handleDragEnd}
+            onDoubleClick={resetPanelHeight}
+            role="separator"
+            aria-label="Ubah tinggi panel halte (klik ganda untuk otomatis)"
+            title="Tarik untuk ubah tinggi • klik ganda untuk otomatis"
+          >
+            <div className={styles.dragHandleBar} />
+          </div>
+
           <div className={styles.etaHeader}>
-            <div>
-              <span className={styles.etaLabel}>Upcoming Arrivals</span>
-              <h2 className={styles.etaTitle}>Nearby Stops</h2>
+            <div className={styles.etaHeaderText}>
+              <span className={styles.etaLabel}>{stopLabel}</span>
+              <h2 className={styles.etaTitle}>
+                {selectedStop ? selectedStop.name : 'Belum ada halte'}
+              </h2>
             </div>
-            <StatusChip />
+
+            <div className={styles.etaHeaderActions}>
+              <StatusChip />
+              <button
+                className={styles.changeStopBtn}
+                onClick={() => setPickerOpen(true)}
+                disabled={stops.length === 0}
+              >
+                Ganti
+              </button>
+            </div>
           </div>
 
           <div className={styles.etaContent}>
-            <ETACardList etas={etas} />
+            <ArrivalList stopEta={selectedStopEta} hasSelectedStop={selectedStop !== null} />
           </div>
         </section>
       </main>
+
+      {pickerOpen && (
+        <StopPicker
+          stops={stops}
+          selectedStopId={selectedStopId}
+          userLocation={location}
+          servedStopIds={servedStopIds}
+          onSelect={(id) => selectStop(id, true)}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Marker, Popup, useMap } from 'react-leaflet'
+import { Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import { Shuttle } from '@/lib/types'
 
@@ -9,23 +9,35 @@ interface BusMarkerProps {
   shuttle: Shuttle
 }
 
-function createBusIcon(routeCode: string, color: string): L.DivIcon {
+function createBusIcon(routeCode: string, color: string, isStale: boolean): L.DivIcon {
+  // Bus basi (tidak mengirim GPS) ditampilkan redup & abu — posisinya adalah
+  // lokasi TERAKHIR yang diketahui, bukan posisi sekarang.
+  const fill = isStale ? '#8a9a94' : color
+  const opacity = isStale ? 0.5 : 1
+
   return L.divIcon({
     className: '',
     iconSize: [60, 52],
     iconAnchor: [30, 52],
     popupAnchor: [0, -52],
     html: `
-      <div class="bus-marker">
-        <div class="bus-marker-label" style="background-color: ${color}; color: var(--on-primary, #c9ffdf);">
+      <div class="bus-marker" style="opacity: ${opacity};">
+        <div class="bus-marker-label" style="background-color: ${fill}; color: var(--on-primary, #c9ffdf);">
           ${routeCode}
         </div>
-        <div class="bus-marker-icon" style="background-color: ${color}; color: var(--on-primary, #c9ffdf);">
+        <div class="bus-marker-icon" style="background-color: ${fill}; color: var(--on-primary, #c9ffdf);">
           <span style="font-size: 16px;">🚌</span>
         </div>
       </div>
     `,
   })
+}
+
+function formatSince(seconds: number): string {
+  if (seconds < 60) return `${seconds} detik`
+  const mins = Math.floor(seconds / 60)
+  if (mins < 60) return `${mins} menit`
+  return `${Math.floor(mins / 60)} jam`
 }
 
 function getRouteColor(routeId: number): string {
@@ -41,7 +53,7 @@ export default function BusMarker({ shuttle }: BusMarkerProps) {
   const markerRef = useRef<L.Marker | null>(null)
 
   const color = getRouteColor(shuttle.route_id)
-  const icon = createBusIcon(shuttle.route_code, color)
+  const icon = createBusIcon(shuttle.route_code, color, shuttle.is_stale)
 
   // Smooth movement animation
   useEffect(() => {
@@ -94,9 +106,24 @@ export default function BusMarker({ shuttle }: BusMarkerProps) {
             {shuttle.bus_name}
           </span>
           <br />
-          <span style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>
-            Speed: {shuttle.speed_kmh} km/h
-          </span>
+          {shuttle.is_stale ? (
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--error)' }}>
+              ⚠ Sinyal terputus — posisi terakhir
+              {shuttle.seconds_since_update != null &&
+                ` (${formatSince(shuttle.seconds_since_update)} lalu)`}
+            </span>
+          ) : shuttle.is_stopped ? (
+            // Beda dari sinyal terputus: GPS bus ini justru sehat dan posisinya
+            // akurat — yang berhenti busnya.
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--error)' }}>
+              ⏸ Bus berhenti
+              {shuttle.stopped_seconds != null && ` — sudah ${formatSince(shuttle.stopped_seconds)}`}
+            </span>
+          ) : (
+            <span style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>
+              Speed: {shuttle.speed_kmh} km/h
+            </span>
+          )}
           <br />
           <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>
             {shuttle.license_plate}

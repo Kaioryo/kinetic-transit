@@ -12,8 +12,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: var(--primary);
-  animation: pulse-live 2s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 .text {
@@ -21,4 +20,30 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--on-surface-variant);
+  white-space: nowrap;
+}
+
+/* --- Data segar: ada bus yang aktif mengirim GPS --- */
+.live .dot {
+  background-color: var(--primary);
+  animation: pulse-live 2s ease-in-out infinite;
+}
+
+/* --- Sinyal terputus: ada bus aktif, tapi semua berhenti mengirim GPS --- */
+.stale {
+  background-color: rgba(186, 26, 26, 0.1);
+}
+
+.stale .dot {
+  background-color: var(--error);
+}
+
+.stale .text {
+  color: var(--error);
+}
+
+/* --- Tidak ada bus beroperasi sama sekali --- */
+.idle .dot {
+  background-color: var(--on-surface-variant);
+  opacity: 0.4;
 }

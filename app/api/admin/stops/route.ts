@@ -87,8 +87,9 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(result, { status: 201 })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error add stop:', error)
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Internal Server Error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

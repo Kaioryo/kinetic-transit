@@ -45,9 +45,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
         where: { stop_id: stopId }
       })
 
-      // 2. Cascade: hapus route_stops & etas dulu, lalu stop-nya
+      // 2. Cascade: hapus route_stops & log ETA dulu, lalu stop-nya
       await tx.route_stops.deleteMany({ where: { stop_id: stopId } })
-      await tx.etas.deleteMany({ where: { stop_id: stopId } })
+      await tx.eta_logs.deleteMany({ where: { stop_id: stopId } })
       await tx.stops.delete({ where: { id: stopId } })
 
       // 3. Tutup jarak (gap) urutan untuk setiap jalur yang terdampak
@@ -71,8 +71,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error delete stop:', error)
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Internal Server Error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

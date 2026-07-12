@@ -10,6 +10,19 @@
  * ETA tidak dihitung di sini; GET /api/live yang menghitungnya on-read.
  *
  * Jalankan dengan: node --env-file=.env scripts/dummy-bus.mjs
+ *
+ * OPSI SIMULASI GANGGUAN (untuk menguji perilaku ETA saat bus bermasalah):
+ *
+ *   --stall=<tripId>[,<tripId>]   Bus MOGOK: berhenti bergerak tapi TETAP mengirim
+ *                                 posisi dengan speed 0. Ini persis kondisi yang
+ *                                 berbahaya — GPS hidup, bus mati — sehingga is_stale
+ *                                 tidak menangkapnya. ETA harus jadi null/"berhenti",
+ *                                 bukan angka menit yang optimis.
+ *   --slow=<km/jam>               Bus MACET: semua bus merayap di kecepatan ini
+ *                                 (tetap bergerak). ETA harus MEMBESAR, dan bus tidak
+ *                                 boleh salah dicap "berhenti".
+ *
+ * Contoh: node --env-file=.env scripts/dummy-bus.mjs --stall=13
  */
 
 import { PrismaClient } from '@prisma/client'
@@ -21,6 +34,20 @@ const loggerState = createLoggerState()
 const TICK_MS = 3000        // interval kirim posisi (mirip ESP32 ~3 detik)
 const MIN_SPEED = 15        // km/jam
 const MAX_SPEED = 25        // km/jam
+
+// ─── Opsi CLI ───────────────────────────────────────────────────────────────
+function argValue(name) {
+  const hit = process.argv.find((a) => a.startsWith(`--${name}=`))
+  return hit ? hit.slice(name.length + 3) : null
+}
+
+const STALLED_TRIPS = new Set(
+  (argValue('stall') ?? '')
+    .split(',')
+    .map((s) => parseInt(s.trim(), 10))
+    .filter((n) => Number.isFinite(n))
+)
+const SLOW_KMH = argValue('slow') != null ? parseFloat(argValue('slow')) : null
 
 // ─── Util geometri (inline, karena ini script node murni) ──────────────────
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -110,7 +137,11 @@ async function tick(trips) {
     if (!state) continue
 
     const path = state.path
-    const speed = MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED)
+    const stalled = STALLED_TRIPS.has(trip.id)
+
+    // Bus mogok: kecepatan 0 dan posisi tidak maju sedikit pun — tapi GPS-nya TETAP
+    // mengirim, jadi dari sisi server bus ini terlihat "hidup". Justru itu ujiannya.
+    const speed = stalled ? 0 : SLOW_KMH ?? MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED)
     let remainingKm = speed * (TICK_MS / 3_600_000) // km yang ditempuh per tick
 
     // Maju sepanjang path (bisa melompati beberapa segmen pendek dalam 1 tick,
@@ -159,14 +190,13 @@ async function tick(trips) {
       tripId: trip.id,
       lat,
       lng,
-      speed,
       stops: state.stops,
       waypoints: state.waypoints,
       state: loggerState,
     })
 
     console.log(
-      `🚌 ${trip.buses.name} [${state.source}] → lat=${lat.toFixed(6)} lng=${lng.toFixed(6)} | ${speed.toFixed(1)} km/j | seg ${state.segIndex}/${path.length}`
+      `${stalled ? '⏸' : '🚌'} ${trip.buses.name} (trip ${trip.id}) [${state.source}] → lat=${lat.toFixed(6)} lng=${lng.toFixed(6)} | ${speed.toFixed(1)} km/j${stalled ? ' MOGOK' : ''} | seg ${state.segIndex}/${path.length}`
     )
   }
 }
@@ -182,6 +212,13 @@ async function main() {
     console.warn('⚠️  Tidak ada trip aktif. Pastikan DB sudah di-seed & ada trip status="active".')
   } else {
     console.log(`✅ Menggerakkan ${trips.length} bus di sepanjang halte aslinya.`)
+    console.log(`   Trip aktif: ${trips.map((t) => `${t.id}=${t.buses.name}`).join(', ')}`)
+  }
+  if (STALLED_TRIPS.size > 0) {
+    console.log(`⏸  Simulasi MOGOK untuk trip: ${[...STALLED_TRIPS].join(', ')} (GPS tetap kirim, speed 0)`)
+  }
+  if (SLOW_KMH != null) {
+    console.log(`🐢 Simulasi MACET: semua bus merayap ${SLOW_KMH} km/jam`)
   }
 
   let sinceReload = 0

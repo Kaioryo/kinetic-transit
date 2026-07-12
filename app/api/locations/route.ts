@@ -65,8 +65,8 @@ export async function POST(req: Request) {
       location: newLocation
     })
 
-  } catch (error: any) {
-    console.error('Error handling IoT POST:', error.message)
+  } catch (error) {
+    console.error('Error handling IoT POST:', error instanceof Error ? error.message : error)
     return NextResponse.json(
       { success: false, error: 'Internal Server Error' },
       { status: 500 }

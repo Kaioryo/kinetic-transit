@@ -31,4 +31,5 @@
   font-size: 0.875rem;
   color: var(--on-surface-variant);
   margin-top: var(--space-xs);
+  max-width: 32ch;
 }
