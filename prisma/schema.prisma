@@ -53,7 +53,16 @@ model eta_logs {
   actual_arrival    DateTime? @db.Timestamp(0)                 // diisi saat bus benar-benar tiba di halte
   error_seconds     Int?                                       // actual - predicted (detik); + = telat, - = lebih cepat
 
+  // Asal data. WAJIB dibedakan: prediksi dari dummy-bus TIDAK memvalidasi apa pun
+  // (simulator menyusuri polyline yang sama dengan yang dipakai menghitung ETA, dan
+  // menuliskan sendiri kolom speed-nya — jadi ia dinilai terhadap dirinya sendiri).
+  // Hanya baris `field` (GPS ESP32 sungguhan) yang boleh dipakai sebagai angka akurasi
+  // di laporan. Tanpa kolom ini, satu kali `npm run dummy-bus` akan diam-diam mencemari
+  // data evaluasi dan tidak bisa dipisahkan lagi.
+  source            String    @default("simulated") @db.VarChar(16) // "simulated" | "field"
+
   @@index([trip_id, stop_id], map: "idx_eta_logs_trip_stop")
+  @@index([source], map: "idx_eta_logs_source")
 }
 
 model routes {

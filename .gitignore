@@ -44,3 +44,8 @@ next-env.d.ts
 
 # catatan diskusi internal (bukan bagian program)
 ETA_FEATURE_DESIGN.md
+FIELD_TEST.md
+
+# keluaran `npm run eta-report` — ditimpa tiap run. Arsipkan dengan nama
+# bertanggal (mis. eta-field-2026-07-15.csv) kalau mau disimpan.
+eta-report.csv

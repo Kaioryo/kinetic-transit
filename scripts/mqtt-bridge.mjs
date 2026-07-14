@@ -134,6 +134,9 @@ client.on('message', async (topic, messageBuffer) => {
         stops: routeData.stops,
         waypoints: routeData.waypoints,
         state: loggerState,
+        // GPS ESP32 sungguhan → satu-satunya sumber yang sah dipakai sebagai
+        // angka akurasi di laporan.
+        source: 'field',
       })
     }
 

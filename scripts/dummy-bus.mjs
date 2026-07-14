@@ -193,6 +193,10 @@ async function tick(trips) {
       stops: state.stops,
       waypoints: state.waypoints,
       state: loggerState,
+      // Simulator menyusuri polyline yang SAMA dengan yang dipakai menghitung ETA,
+      // dan menuliskan sendiri kolom speed-nya — jadi prediksinya dinilai terhadap
+      // dirinya sendiri. Ditandai supaya tidak pernah tercampur ke angka laporan.
+      source: 'simulated',
     })
 
     console.log(
