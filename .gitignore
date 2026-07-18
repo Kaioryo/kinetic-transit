@@ -49,3 +49,7 @@ FIELD_TEST.md
 # keluaran `npm run eta-report` — ditimpa tiap run. Arsipkan dengan nama
 # bertanggal (mis. eta-field-2026-07-15.csv) kalau mau disimpan.
 eta-report.csv
+
+# dump data referensi untuk import ke DB cloud (dibuat via mysqldump) — artefak
+# migrasi, bukan bagian kode.
+tidb-seed.sql

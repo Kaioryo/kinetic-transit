@@ -5,8 +5,11 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { Shuttle } from '@/lib/types'
 import { useTransitStore } from '@/lib/store'
+import { UserLocation } from '@/lib/useUserLocation'
 import BusMarker from './BusMarker'
 import StopMarker from './StopMarker'
+import UserLocationMarker from './UserLocationMarker'
+import RecenterController from './RecenterController'
 
 // Center on Jatinangor campus
 const JATINANGOR_CENTER: [number, number] = [-6.9295, 107.7757]
@@ -25,6 +28,8 @@ if (typeof window !== 'undefined') {
 
 interface MapContentProps {
   shuttles: Shuttle[]
+  userLocation: UserLocation | null
+  recenterTick: number
 }
 
 function MapUpdater({ shuttles }: { shuttles: Shuttle[] }) {
@@ -45,11 +50,12 @@ function MapUpdater({ shuttles }: { shuttles: Shuttle[] }) {
   return null
 }
 
-export default function MapContent({ shuttles }: MapContentProps) {
+export default function MapContent({ shuttles, userLocation, recenterTick }: MapContentProps) {
   // Ambil stops dari Zustand store (data dari MySQL, bukan mock)
   const stops = useTransitStore((state) => state.stops)
   const selectedStopId = useTransitStore((state) => state.selectedStopId)
   const selectStop = useTransitStore((state) => state.selectStop)
+  const selectShuttle = useTransitStore((state) => state.selectShuttle)
 
   return (
     <MapContainer
@@ -76,10 +82,16 @@ export default function MapContent({ shuttles }: MapContentProps) {
         />
       ))}
 
-      {/* Shuttle markers */}
+      {/* Shuttle markers — tap untuk lihat semua halte + ETA bus itu */}
       {shuttles.map((shuttle) => (
-        <BusMarker key={shuttle.id} shuttle={shuttle} />
+        <BusMarker key={shuttle.id} shuttle={shuttle} onSelect={selectShuttle} />
       ))}
+
+      {/* Titik "posisi Anda" */}
+      {userLocation && <UserLocationMarker location={userLocation} />}
+
+      {/* Penggeser peta ke lokasi user (dipicu tombol di header) */}
+      <RecenterController location={userLocation} recenterTick={recenterTick} />
     </MapContainer>
   )
 }

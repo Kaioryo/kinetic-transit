@@ -7,6 +7,8 @@ import { Shuttle } from '@/lib/types'
 
 interface BusMarkerProps {
   shuttle: Shuttle
+  /** Klik marker → pilih bus ini (panel bawah menampilkan halte + ETA-nya). */
+  onSelect?: (shuttleId: string) => void
 }
 
 function createBusIcon(routeCode: string, color: string, isStale: boolean): L.DivIcon {
@@ -49,7 +51,7 @@ function getRouteColor(routeId: number): string {
   return colors[routeId] || '#006945'
 }
 
-export default function BusMarker({ shuttle }: BusMarkerProps) {
+export default function BusMarker({ shuttle, onSelect }: BusMarkerProps) {
   const markerRef = useRef<L.Marker | null>(null)
 
   const color = getRouteColor(shuttle.route_id)
@@ -95,6 +97,7 @@ export default function BusMarker({ shuttle }: BusMarkerProps) {
       ref={markerRef}
       position={[shuttle.latitude, shuttle.longitude]}
       icon={icon}
+      eventHandlers={onSelect ? { click: () => onSelect(shuttle.id) } : undefined}
     >
       <Popup>
         <div style={{ fontFamily: 'var(--font-body)', minWidth: '160px' }}>

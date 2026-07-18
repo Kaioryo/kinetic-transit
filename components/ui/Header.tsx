@@ -2,8 +2,16 @@
 
 import styles from './Header.module.css'
 import AboutModal from './AboutModal'
+import { GeoStatus } from '@/lib/useUserLocation'
 
-export default function Header() {
+interface HeaderProps {
+  geoStatus: GeoStatus
+  onLocationClick: () => void
+}
+
+export default function Header({ geoStatus, onLocationClick }: HeaderProps) {
+  const denied = geoStatus === 'denied'
+
   return (
     <header className={styles.header}>
       <div className={styles.left}>
@@ -35,7 +43,13 @@ export default function Header() {
         <h1 className={styles.title}>Kinetic Transit</h1>
       </div>
       <div className={styles.right}>
-        <button className={styles.iconButton} aria-label="My location" title="My Location">
+        <button
+          className={styles.iconButton}
+          onClick={onLocationClick}
+          aria-label="Ke lokasi saya"
+          title={denied ? 'Izin lokasi diblokir — klik untuk info' : 'Ke lokasi saya'}
+          style={denied ? { color: '#ba1a1a' } : undefined}
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
             <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" />

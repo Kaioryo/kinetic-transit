@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "postinstall": "prisma generate",
     "mqtt-bridge": "node --env-file=.env scripts/mqtt-bridge.mjs",
     "dummy-bus": "node --env-file=.env scripts/dummy-bus.mjs",
     "fetch-waypoints": "node --env-file=.env scripts/fetch-route-waypoints.mjs",
+    "rebuild-waypoints": "node --env-file=.env scripts/rebuild-waypoints-from-trip.mjs",
     "eta-report": "node --env-file=.env scripts/eta-report.mjs"
   },
   "dependencies": {

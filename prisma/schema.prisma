@@ -3,8 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  // FK diemulasi di level aplikasi (Prisma), bukan constraint DB. Aman & disarankan
+  // untuk MySQL serverless (TiDB/PlanetScale). Semua relasi sudah punya @@index.
+  relationMode = "prisma"
 }
 
 model bus_locations {
