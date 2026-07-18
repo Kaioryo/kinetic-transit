@@ -1,11 +1,21 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 
-// GET /api/history — daftar perjalanan yang PUNYA rekaman GPS (untuk playback).
-// Hanya trip dengan cukup titik yang ditampilkan (menyaring trip kosong/mis-start).
+function isAuthenticated(cookieStore: Awaited<ReturnType<typeof cookies>>) {
+  return cookieStore.get('admin_session')?.value === 'authenticated'
+}
+
+// GET /api/admin/history — daftar perjalanan yang PUNYA rekaman GPS (untuk playback).
+// Admin-only. Hanya trip dengan cukup titik yang ditampilkan (menyaring mis-start).
 const MIN_POINTS = 10
 
 export async function GET() {
+  const cookieStore = await cookies()
+  if (!isAuthenticated(cookieStore)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const trips = await prisma.trips.findMany({
       include: {

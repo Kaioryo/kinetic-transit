@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 
-// GET /api/history/[id] — jejak GPS lengkap satu perjalanan untuk playback.
-// Mengembalikan trace (urut waktu, dengan offset ms dari awal) + halte rute
-// (sebagai konteks di peta).
+function isAuthenticated(cookieStore: Awaited<ReturnType<typeof cookies>>) {
+  return cookieStore.get('admin_session')?.value === 'authenticated'
+}
+
+// GET /api/admin/history/[id] — jejak GPS lengkap satu perjalanan untuk playback.
+// Admin-only. Mengembalikan trace (urut waktu, offset ms dari awal) + halte rute.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const cookieStore = await cookies()
+  if (!isAuthenticated(cookieStore)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { id } = await params
     const tripId = parseInt(id, 10)
@@ -37,7 +46,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const trace = locs.map((l) => ({
       lat: Number(l.latitude),
       lng: Number(l.longitude),
-      // offset milidetik dari titik pertama (dipakai untuk playback berbasis waktu asli)
       t: (l.recorded_at?.getTime() ?? t0) - t0,
       speed: Number(l.speed ?? 0),
     }))

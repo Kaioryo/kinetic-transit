@@ -228,6 +228,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className={styles.headerRight}>
+          <Link href="/admin/history" className={styles.linkBtn}>Riwayat</Link>
           <Link href="/" className={styles.linkBtn}>Lihat Peta</Link>
           <button onClick={handleLogout} className={styles.logoutBtn}>Logout</button>
         </div>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { TracePoint, PlaybackStop } from '@/components/history/PlaybackMap'
 import styles from './page.module.css'
 
@@ -56,7 +57,8 @@ function interpolate(trace: TraceP[], ms: number) {
   }
 }
 
-export default function HistoryPage() {
+export default function AdminHistoryPage() {
+  const router = useRouter()
   const [trips, setTrips] = useState<HistoryTrip[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [detail, setDetail] = useState<TripDetail | null>(null)
@@ -71,22 +73,27 @@ export default function HistoryPage() {
 
   const duration = detail?.trip.duration_ms ?? 0
 
-  // Muat daftar trip.
+  // Muat daftar trip (admin-only; 401 → balik ke login).
   useEffect(() => {
-    fetch('/api/history')
-      .then((r) => r.json())
-      .then((d) => setTrips(d.trips ?? []))
+    fetch('/api/admin/history')
+      .then((r) => {
+        if (r.status === 401) {
+          router.push('/admin')
+          return null
+        }
+        return r.json()
+      })
+      .then((d) => d && setTrips(d.trips ?? []))
       .catch(() => setTrips([]))
-  }, [])
+  }, [router])
 
-  // Muat trace trip terpilih.
   const selectTrip = useCallback((id: number) => {
     setSelectedId(id)
     setPlaying(false)
     setPlaybackMs(0)
     setDetail(null)
     setLoading(true)
-    fetch(`/api/history/${id}`)
+    fetch(`/api/admin/history/${id}`)
       .then((r) => r.json())
       .then((d) => setDetail(d))
       .finally(() => setLoading(false))
@@ -122,7 +129,6 @@ export default function HistoryPage() {
 
   const togglePlay = useCallback(() => {
     if (!detail) return
-    // Kalau sudah di ujung, mulai lagi dari awal.
     if (playbackMs >= duration) setPlaybackMs(0)
     setPlaying((p) => !p)
   }, [detail, playbackMs, duration])
@@ -130,12 +136,11 @@ export default function HistoryPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <Link href="/" className={styles.back}>← Peta Live</Link>
+        <Link href="/admin/dashboard" className={styles.back}>← Dashboard</Link>
         <h1 className={styles.title}>Riwayat Perjalanan</h1>
       </header>
 
       <div className={styles.body}>
-        {/* Daftar trip */}
         <aside className={styles.sidebar}>
           <h2 className={styles.sideTitle}>Pilih Perjalanan</h2>
           {trips.length === 0 && <p className={styles.empty}>Belum ada perjalanan terekam.</p>}
@@ -158,7 +163,6 @@ export default function HistoryPage() {
           ))}
         </aside>
 
-        {/* Peta + kontrol */}
         <main className={styles.main}>
           <div className={styles.mapWrap}>
             {loading ? (
