@@ -9,69 +9,81 @@
 /* --- Google Fonts --- */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap');
 
-/* --- Design Tokens --- */
+/* --- Design Tokens ---
+   Brand: Biru (#045595) — identitas & struktur utama, "transit blue".
+          Amber (#f4ae00) — aksen "hidup/mendesak": status Live, badge
+          Berikutnya, ETA yang akan tiba. Putih & hitam — permukaan netral.
+   Token *-rgb tersedia untuk pola rgba(var(--x-rgb), alpha) di seluruh app,
+   supaya tidak ada hex/rgb brand yang tertempel langsung di file lain. */
 :root {
-  /* Primary */
-  --primary: #006945;
-  --primary-dim: #005c3c;
-  --primary-container: #8af5be;
-  --primary-fixed: #8af5be;
-  --primary-fixed-dim: #7ce6b1;
-  --on-primary: #c9ffdf;
-  --on-primary-container: #005c3c;
-  --on-primary-fixed: #00472d;
+  /* Primary — Biru brand */
+  --primary: #045595;
+  --primary-dim: #023f70;
+  --primary-container: #d7e8fb;
+  --primary-fixed: #d7e8fb;
+  --primary-fixed-dim: #b7d7f5;
+  --on-primary: #ffffff;
+  --on-primary-container: #023357;
+  --on-primary-fixed: #012544;
+  --primary-rgb: 4, 85, 149;
 
-  /* Secondary */
-  --secondary: #4c5d6e;
-  --secondary-dim: #405162;
-  --secondary-container: #d2e4f9;
-  --secondary-fixed: #d2e4f9;
-  --secondary-fixed-dim: #c4d6eb;
-  --on-secondary: #ebf3ff;
-  --on-secondary-container: #425364;
+  /* Secondary — Slate biru (Jalur B, elemen pendukung) */
+  --secondary: #4c6478;
+  --secondary-dim: #3a4f61;
+  --secondary-container: #dde7ef;
+  --secondary-fixed: #dde7ef;
+  --secondary-fixed-dim: #c7d5e0;
+  --on-secondary: #ffffff;
+  --on-secondary-container: #2e4150;
+  --secondary-rgb: 76, 100, 120;
 
-  /* Tertiary */
-  --tertiary: #006573;
-  --tertiary-dim: #005865;
-  --tertiary-container: #00e0fe;
-  --tertiary-fixed: #00e0fe;
-  --tertiary-fixed-dim: #00d1ed;
-  --on-tertiary: #dbf8ff;
-  --on-tertiary-container: #004b56;
+  /* Tertiary — Amber brand (liveness / urgency accent) */
+  --tertiary: #f4ae00;
+  --tertiary-dim: #d99900;
+  --tertiary-container: #fff0cc;
+  --tertiary-fixed: #fff0cc;
+  --tertiary-fixed-dim: #ffe08a;
+  --on-tertiary: #221900;
+  --on-tertiary-container: #6b4900;
+  --tertiary-rgb: 244, 174, 0;
 
-  /* Error */
-  --error: #b31b25;
-  --error-dim: #9f0519;
-  --error-container: #fb5151;
-  --on-error: #ffefee;
-  --on-error-container: #570008;
+  /* Error — merah semantik (universal, lepas dari brand) */
+  --error: #ba1a1a;
+  --error-dim: #93000a;
+  --error-container: #ffdad6;
+  --on-error: #ffffff;
+  --on-error-container: #410002;
+  --error-rgb: 186, 26, 26;
 
-  /* Surface */
-  --surface: #d9ffef;
-  --surface-dim: #90e5c8;
-  --surface-bright: #d9ffef;
-  --surface-variant: #9eecd0;
-  --surface-tint: #006945;
+  /* Surface — putih bersih, netral (brand putih/hitam) */
+  --surface: #f6f8fb;
+  --surface-dim: #d7dde4;
+  --surface-bright: #f6f8fb;
+  --surface-variant: #e2e8f0;
+  --surface-tint: #045595;
   --surface-container-lowest: #ffffff;
-  --surface-container-low: #bffee6;
-  --surface-container: #b2f6dd;
-  --surface-container-high: #a8f1d7;
-  --surface-container-highest: #9eecd0;
+  --surface-container-low: #f0f3f7;
+  --surface-container: #eaeef3;
+  --surface-container-high: #e4e9ef;
+  --surface-container-highest: #dee3ea;
 
   /* On Surface */
-  --on-surface: #003629;
-  --on-surface-variant: #306554;
-  --on-background: #003629;
-  --background: #d9ffef;
+  --on-surface: #12181e;
+  --on-surface-variant: #46515c;
+  --on-background: #12181e;
+  --background: #f6f8fb;
 
   /* Outline */
-  --outline: #4c816f;
-  --outline-variant: #82b8a4;
+  --outline: #78828c;
+  --outline-variant: #c5ccd4;
 
   /* Inverse */
-  --inverse-surface: #00120b;
-  --inverse-on-surface: #72a894;
-  --inverse-primary: #8af5be;
+  --inverse-surface: #12181e;
+  --inverse-on-surface: #eef1f5;
+  --inverse-primary: #a3cbf2;
+
+  /* Shadow — hitam murni (brand hitam), bukan tinted seperti M3 hijau lama */
+  --shadow-rgb: 0, 0, 0;
 
   /* Typography */
   --font-headline: 'Space Grotesk', system-ui, sans-serif;
@@ -95,10 +107,10 @@
   --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
-  /* Shadows — tinted, not black */
-  --shadow-ambient: 0px 4px 16px rgba(0, 54, 41, 0.04);
-  --shadow-elevated: 0px 8px 24px rgba(0, 54, 41, 0.06);
-  --shadow-overlay: 0px 12px 32px rgba(0, 54, 41, 0.08);
+  /* Shadows — hitam netral (brand hitam), tetap lembut lewat alpha rendah */
+  --shadow-ambient: 0px 4px 16px rgba(var(--shadow-rgb), 0.05);
+  --shadow-elevated: 0px 8px 24px rgba(var(--shadow-rgb), 0.08);
+  --shadow-overlay: 0px 12px 32px rgba(var(--shadow-rgb), 0.12);
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -134,6 +146,18 @@ body {
 ::selection {
   background-color: var(--primary-container);
   color: var(--on-primary-container);
+}
+
+/* Fokus keyboard — ring biru brand konsisten di semua elemen interaktif,
+   menggantikan outline default browser yang berbeda-beda tiap platform.
+   Browser modern otomatis melengkungkan outline mengikuti border-radius
+   elemennya sendiri, jadi tombol bulat & persegi sama-sama rapi. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[role='button']:focus-visible {
+  outline: 2.5px solid var(--primary);
+  outline-offset: 2px;
 }
 
 /* --- Typography Scales --- */
@@ -229,9 +253,9 @@ body {
 }
 
 @keyframes pulse-marker {
-  0% { box-shadow: 0 0 0 0 rgba(0, 105, 69, 0.4); }
-  70% { box-shadow: 0 0 0 12px rgba(0, 105, 69, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 105, 69, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(var(--primary-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
 }
 
 @keyframes fade-up {
@@ -279,7 +303,7 @@ body {
 }
 
 .glass-surface {
-  background-color: rgba(217, 255, 239, 0.7);
+  background-color: rgba(246, 248, 251, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
@@ -340,7 +364,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  filter: drop-shadow(0 2px 6px rgba(0, 54, 41, 0.2));
+  filter: drop-shadow(0 2px 6px rgba(var(--shadow-rgb), 0.25));
 }
 
 .bus-marker-label {

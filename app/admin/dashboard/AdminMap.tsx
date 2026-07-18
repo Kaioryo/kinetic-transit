@@ -23,10 +23,10 @@ function fixLeafletIcon() {
   })
 }
 
-// Ikon halte existing (biru kecil)
+// Ikon halte existing (biru brand)
 const stopIcon = L.divIcon({
   className: '',
-  html: `<div style="width:10px;height:10px;background:#006945;border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`,
+  html: `<div style="width:10px;height:10px;background:#045595;border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`,
   iconSize: [10, 10],
   iconAnchor: [5, 5],
 })
@@ -34,7 +34,7 @@ const stopIcon = L.divIcon({
 // Ikon titik yang dipilih (merah, lebih besar)
 const pickedIcon = L.divIcon({
   className: '',
-  html: `<div style="width:16px;height:16px;background:#b31b25;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(179,27,37,0.5)"></div>`,
+  html: `<div style="width:16px;height:16px;background:#ba1a1a;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(186,26,26,0.5)"></div>`,
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 })

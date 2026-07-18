@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import { Shuttle } from '@/lib/types'
+import { busIconMarkup, WarningIcon, PauseIcon } from '@/components/icons/Icons'
 
 interface BusMarkerProps {
   shuttle: Shuttle
@@ -11,11 +12,15 @@ interface BusMarkerProps {
   onSelect?: (shuttleId: string) => void
 }
 
-function createBusIcon(routeCode: string, color: string, isStale: boolean): L.DivIcon {
+function createBusIcon(routeCode: string, color: string, textColor: string, isStale: boolean): L.DivIcon {
   // Bus basi (tidak mengirim GPS) ditampilkan redup & abu — posisinya adalah
   // lokasi TERAKHIR yang diketahui, bukan posisi sekarang.
-  const fill = isStale ? '#8a9a94' : color
+  const fill = isStale ? '#8a94a0' : color
+  const text = isStale ? '#ffffff' : textColor
   const opacity = isStale ? 0.5 : 1
+  // Highlight radial tipis di atas warna solid — kesan bola/glossy, bukan flat
+  // disc. Overlay putih transparan bekerja di atas warna fill apa pun.
+  const glossyFill = `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.5), rgba(255,255,255,0) 60%), ${fill}`
 
   return L.divIcon({
     className: '',
@@ -24,11 +29,11 @@ function createBusIcon(routeCode: string, color: string, isStale: boolean): L.Di
     popupAnchor: [0, -52],
     html: `
       <div class="bus-marker" style="opacity: ${opacity};">
-        <div class="bus-marker-label" style="background-color: ${fill}; color: var(--on-primary, #c9ffdf);">
+        <div class="bus-marker-label" style="background: ${glossyFill}; color: ${text};">
           ${routeCode}
         </div>
-        <div class="bus-marker-icon" style="background-color: ${fill}; color: var(--on-primary, #c9ffdf);">
-          <span style="font-size: 16px;">🚌</span>
+        <div class="bus-marker-icon" style="background: ${glossyFill}; color: ${text};">
+          ${busIconMarkup(18)}
         </div>
       </div>
     `,
@@ -42,20 +47,23 @@ function formatSince(seconds: number): string {
   return `${Math.floor(mins / 60)} jam`
 }
 
-function getRouteColor(routeId: number): string {
-  const colors: Record<number, string> = {
-    1: '#006945', // Jalur A (Main Line)
-    2: '#4c5d6e', // Jalur B
-    3: '#b5651d', // Jalur C
+// Fill + teks per jalur. Jalur C memakai amber brand — perlu teks GELAP
+// khusus di situ karena teks putih (dipakai jalur A/B) kontrasnya buruk
+// di atas amber terang.
+function getRouteColors(routeId: number): { fill: string; text: string } {
+  const map: Record<number, { fill: string; text: string }> = {
+    1: { fill: '#045595', text: '#ffffff' }, // Jalur A — biru brand (Main Line)
+    2: { fill: '#4c6478', text: '#ffffff' }, // Jalur B — slate biru
+    3: { fill: '#f4ae00', text: '#221900' }, // Jalur C — amber brand
   }
-  return colors[routeId] || '#006945'
+  return map[routeId] ?? map[1]
 }
 
 export default function BusMarker({ shuttle, onSelect }: BusMarkerProps) {
   const markerRef = useRef<L.Marker | null>(null)
 
-  const color = getRouteColor(shuttle.route_id)
-  const icon = createBusIcon(shuttle.route_code, color, shuttle.is_stale)
+  const { fill, text } = getRouteColors(shuttle.route_id)
+  const icon = createBusIcon(shuttle.route_code, fill, text, shuttle.is_stale)
 
   // Smooth movement animation
   useEffect(() => {
@@ -110,16 +118,36 @@ export default function BusMarker({ shuttle, onSelect }: BusMarkerProps) {
           </span>
           <br />
           {shuttle.is_stale ? (
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--error)' }}>
-              ⚠ Sinyal terputus — posisi terakhir
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: 'var(--error)',
+              }}
+            >
+              <WarningIcon size={13} />
+              Sinyal terputus — posisi terakhir
               {shuttle.seconds_since_update != null &&
                 ` (${formatSince(shuttle.seconds_since_update)} lalu)`}
             </span>
           ) : shuttle.is_stopped ? (
             // Beda dari sinyal terputus: GPS bus ini justru sehat dan posisinya
             // akurat — yang berhenti busnya.
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--error)' }}>
-              ⏸ Bus berhenti
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: 'var(--error)',
+              }}
+            >
+              <PauseIcon size={13} />
+              Bus berhenti
               {shuttle.stopped_seconds != null && ` — sudah ${formatSince(shuttle.stopped_seconds)}`}
             </span>
           ) : (

@@ -17,6 +17,14 @@ function formatDuration(seconds: number): string {
   return rest > 0 ? `${hours} jam ${rest} menit` : `${hours} jam`
 }
 
+// Aksen kiri kartu — menyampaikan urgensi status sekilas pandang, tanpa harus
+// membaca angkanya dulu (amber = akan tiba, merah = terlambat/berhenti).
+function accentFor(status: Arrival['status']): string {
+  if (status === 'arriving') return 'var(--tertiary)'
+  if (status === 'delayed' || status === 'stopped') return 'var(--error)'
+  return 'var(--primary)'
+}
+
 export default function ArrivalCard({ arrival: a, index }: ArrivalCardProps) {
   const isPrimary = a.route_type === 'Main Line'
   const isStopped = a.status === 'stopped'
@@ -26,13 +34,18 @@ export default function ArrivalCard({ arrival: a, index }: ArrivalCardProps) {
       className={`${styles.card} ${a.just_passed ? styles.cardPassed : ''} ${
         isStopped ? styles.cardStopped : ''
       }`}
-      style={{ animationDelay: `${index * 80}ms` }}
+      style={
+        {
+          animationDelay: `${index * 80}ms`,
+          '--accent': accentFor(a.status),
+        } as React.CSSProperties
+      }
     >
       <div className={styles.left}>
         <div
           className={styles.routeBadge}
           style={{
-            backgroundColor: isPrimary ? 'rgba(0, 105, 69, 0.1)' : 'rgba(76, 93, 110, 0.1)',
+            backgroundColor: isPrimary ? 'rgba(var(--primary-rgb), 0.1)' : 'rgba(var(--secondary-rgb), 0.1)',
           }}
         >
           <span
@@ -71,7 +84,7 @@ export default function ArrivalCard({ arrival: a, index }: ArrivalCardProps) {
               style={{
                 color:
                   a.status === 'arriving'
-                    ? 'var(--primary)'
+                    ? 'var(--on-tertiary-container)'
                     : a.status === 'delayed'
                       ? 'var(--error)'
                       : 'var(--on-surface)',

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { PinIcon } from '@/components/icons/Icons'
 import styles from './page.module.css'
 
 // Lazy-load map agar tidak SSR
@@ -352,7 +353,7 @@ export default function AdminDashboard() {
                     Klik pada peta di bawah untuk mengisi Latitude & Longitude secara otomatis
                     {pickedCoord && (
                       <span className={styles.coordBadge}>
-                        📍 {pickedCoord.lat.toFixed(6)}, {pickedCoord.lng.toFixed(6)}
+                        <PinIcon size={12} /> {pickedCoord.lat.toFixed(6)}, {pickedCoord.lng.toFixed(6)}
                       </span>
                     )}
                   </div>

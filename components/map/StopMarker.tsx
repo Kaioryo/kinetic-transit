@@ -24,19 +24,19 @@ function createStopIcon(isSelected: boolean): L.DivIcon {
       <div style="
         width: ${size}px;
         height: ${size}px;
-        background-color: ${isSelected ? '#006945' : '#ffffff'};
-        border: ${ring}px solid #006945;
+        background-color: ${isSelected ? '#045595' : '#ffffff'};
+        border: ${ring}px solid #045595;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,54,41,${isSelected ? 0.4 : 0.15});
+        box-shadow: 0 2px 8px rgba(4,85,149,${isSelected ? 0.4 : 0.15});
         cursor: pointer;
       ">
         <div style="
           width: ${inner}px;
           height: ${inner}px;
-          background-color: ${isSelected ? '#ffffff' : '#006945'};
+          background-color: ${isSelected ? '#ffffff' : '#045595'};
           border-radius: 50%;
         "></div>
       </div>

@@ -13,8 +13,9 @@
 }
 
 .icon {
-  font-size: 4rem;
+  display: inline-flex;
   margin-bottom: var(--space-xl);
+  color: var(--primary);
   animation: pulse-live 3s ease-in-out infinite;
 }
 

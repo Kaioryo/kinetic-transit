@@ -1,6 +1,7 @@
 'use client'
 
 import { StopEta } from '@/lib/types'
+import { PinIcon, StopIcon } from '@/components/icons/Icons'
 import ArrivalCard from './ArrivalCard'
 import styles from './ArrivalList.module.css'
 
@@ -16,7 +17,7 @@ export default function ArrivalList({ stopEta, hasSelectedStop }: ArrivalListPro
   if (!hasSelectedStop) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyIcon}>📍</span>
+        <span className={styles.emptyIcon}><PinIcon size={40} /></span>
         <p className={styles.emptyText}>Menentukan halte terdekat…</p>
         <p className={styles.emptySubtext}>
           Izinkan akses lokasi, atau pilih halte lewat tombol Ganti
@@ -29,7 +30,7 @@ export default function ArrivalList({ stopEta, hasSelectedStop }: ArrivalListPro
   if (!stopEta || stopEta.arrivals.length === 0) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyIcon}>🚏</span>
+        <span className={styles.emptyIcon}><StopIcon size={40} /></span>
         <p className={styles.emptyText}>Belum ada bus menuju halte ini</p>
         <p className={styles.emptySubtext}>
           Tidak ada bus yang sedang beroperasi di jalur halte ini

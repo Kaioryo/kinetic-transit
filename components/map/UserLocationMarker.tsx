@@ -20,7 +20,7 @@ function createUserIcon(): L.DivIcon {
         <div style="
           position: absolute; inset: 0;
           border-radius: 50%;
-          background: rgba(26, 115, 232, 0.25);
+          background: rgba(4, 85, 149, 0.25);
           animation: ktUserPulse 2s ease-out infinite;
         "></div>
         <div style="
@@ -28,7 +28,7 @@ function createUserIcon(): L.DivIcon {
           width: 14px; height: 14px;
           transform: translate(-50%, -50%);
           border-radius: 50%;
-          background: #1a73e8;
+          background: #045595;
           border: 2.5px solid #ffffff;
           box-shadow: 0 1px 4px rgba(0,0,0,0.35);
         "></div>

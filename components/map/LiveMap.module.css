@@ -12,16 +12,43 @@
   align-items: center;
   justify-content: center;
   background-color: var(--surface-container-highest);
-  gap: var(--space-md);
+  gap: var(--space-lg);
 }
 
+/* Efek "radar" — dua cincin merambat keluar dari titik pusat, lebih bermakna
+   untuk konteks peta/lokasi dibanding dot yang sekadar berdenyut. */
 .loadingPulse {
-  width: 48px;
-  height: 48px;
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.loadingPulse::before,
+.loadingPulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
   background-color: var(--primary);
-  opacity: 0.3;
-  animation: pulse-live 1.5s ease-in-out infinite;
+}
+
+.loadingPulse::before {
+  opacity: 0.9;
+}
+
+.loadingPulse::after {
+  animation: radar-ping 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes radar-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(4.5);
+    opacity: 0;
+  }
 }
 
 .loadingText {

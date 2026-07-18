@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 20, 14, 0.45);
+  background-color: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(2px);
   z-index: 900;
   animation: fade-in 0.2s ease both;
@@ -58,9 +58,11 @@
 }
 
 .closeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  font-size: 1rem;
   color: var(--on-surface-variant);
   cursor: pointer;
   padding: var(--space-xs) var(--space-sm);
@@ -68,15 +70,15 @@
 }
 
 .closeBtn:hover {
-  background-color: rgba(130, 184, 164, 0.12);
+  background-color: rgba(var(--shadow-rgb), 0.06);
 }
 
 .search {
   width: 100%;
   padding: var(--space-md) var(--space-lg);
   border-radius: var(--radius-2xl);
-  border: 1px solid rgba(130, 184, 164, 0.25);
-  background-color: var(--surface-container-low, rgba(130, 184, 164, 0.06));
+  border: 1px solid var(--outline-variant);
+  background-color: var(--surface-container-low);
   font-family: var(--font-body);
   font-size: 0.9375rem;
   color: var(--on-surface);
@@ -110,11 +112,11 @@
 }
 
 .item:hover {
-  background-color: rgba(130, 184, 164, 0.1);
+  background-color: rgba(var(--primary-rgb), 0.06);
 }
 
 .itemSelected {
-  background-color: rgba(0, 105, 69, 0.12);
+  background-color: rgba(var(--primary-rgb), 0.12);
 }
 
 .itemName {
@@ -150,8 +152,9 @@
   flex-shrink: 0;
 }
 
+/* Amber = ada bus aktif menuju halte ini sekarang ("live") */
 .dotServed {
-  background-color: var(--primary);
+  background-color: var(--tertiary);
 }
 
 .dotIdle {

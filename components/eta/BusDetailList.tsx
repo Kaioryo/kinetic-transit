@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { Shuttle, StopEta } from '@/lib/types'
+import { WarningIcon, BusIcon } from '@/components/icons/Icons'
 import styles from './BusDetailList.module.css'
 
 interface BusDetailListProps {
@@ -18,6 +19,13 @@ interface BusStopRow {
   status: 'on-time' | 'delayed' | 'arriving' | 'stopped'
   is_next: boolean
   just_passed: boolean
+}
+
+// Aksen kiri baris — sama seperti ArrivalCard: amber = akan tiba, merah = terlambat/berhenti.
+function accentFor(status: BusStopRow['status']): string {
+  if (status === 'arriving') return 'var(--tertiary)'
+  if (status === 'delayed' || status === 'stopped') return 'var(--error)'
+  return 'var(--primary)'
 }
 
 export default function BusDetailList({ shuttle, stopEtas }: BusDetailListProps) {
@@ -45,7 +53,7 @@ export default function BusDetailList({ shuttle, stopEtas }: BusDetailListProps)
   if (shuttle.is_stale) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyIcon}>⚠️</span>
+        <span className={styles.emptyIcon}><WarningIcon size={28} /></span>
         <p className={styles.emptyText}>Sinyal bus terputus</p>
         <p className={styles.emptySubtext}>
           Posisi terakhir masih tampil di peta, tapi ETA tidak dapat dihitung sampai GPS kembali.
@@ -57,7 +65,7 @@ export default function BusDetailList({ shuttle, stopEtas }: BusDetailListProps)
   if (rows.length === 0) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyIcon}>🚌</span>
+        <span className={styles.emptyIcon}><BusIcon size={28} /></span>
         <p className={styles.emptyText}>Belum ada data halte untuk bus ini</p>
       </div>
     )
@@ -71,7 +79,12 @@ export default function BusDetailList({ shuttle, stopEtas }: BusDetailListProps)
           className={`${styles.row} ${r.just_passed ? styles.rowPassed : ''} ${
             r.status === 'stopped' ? styles.rowStopped : ''
           }`}
-          style={{ animationDelay: `${i * 40}ms` }}
+          style={
+            {
+              animationDelay: `${i * 40}ms`,
+              '--accent': accentFor(r.status),
+            } as React.CSSProperties
+          }
         >
           <div className={styles.left}>
             <span className={styles.seq}>{i + 1}</span>
@@ -96,7 +109,7 @@ export default function BusDetailList({ shuttle, stopEtas }: BusDetailListProps)
                   style={{
                     color:
                       r.status === 'arriving'
-                        ? 'var(--primary)'
+                        ? 'var(--on-tertiary-container)'
                         : r.status === 'delayed'
                           ? 'var(--error)'
                           : 'var(--on-surface)',

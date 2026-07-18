@@ -156,16 +156,21 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--primary);
-  background-color: rgba(0, 105, 69, 0.1);
+  background-color: rgba(var(--primary-rgb), 0.1);
   border: none;
   border-radius: 999px;
   padding: var(--space-sm) var(--space-lg);
   cursor: pointer;
-  transition: background-color var(--transition-fast);
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
 }
 
 .changeStopBtn:hover:not(:disabled) {
-  background-color: rgba(0, 105, 69, 0.2);
+  background-color: rgba(var(--primary-rgb), 0.2);
+  transform: translateY(-1px);
+}
+
+.changeStopBtn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .changeStopBtn:disabled {
@@ -206,7 +211,7 @@
     height: 100%;
     max-height: none;
     min-height: 0;
-    border-left: 1px solid rgba(130, 184, 164, 0.15);
+    border-left: 1px solid var(--outline-variant);
   }
 
   /* Resize hanya relevan di layout bertumpuk (mobile). */

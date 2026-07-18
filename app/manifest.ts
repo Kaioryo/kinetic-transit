@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
       'Monitoring real-time shuttle kampus Universitas Padjadjaran',
     start_url: '/',
     display: 'standalone',
-    background_color: '#d9ffef',
-    theme_color: '#006945',
+    background_color: '#f6f8fb',
+    theme_color: '#045595',
     orientation: 'portrait',
     icons: [
       {

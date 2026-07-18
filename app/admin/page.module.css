@@ -1,14 +1,46 @@
 /* ── Login Page ── */
 .page {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container-low) 100%);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-container-low) 100%);
   padding: var(--space-xl);
+  overflow: hidden;
+}
+
+/* Dua "glow" lembut bertema brand (biru + amber) di latar — kedalaman tanpa ramai */
+.page::before,
+.page::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.16;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page::before {
+  width: 480px;
+  height: 480px;
+  top: -160px;
+  left: -140px;
+  background: var(--primary);
+}
+
+.page::after {
+  width: 380px;
+  height: 380px;
+  bottom: -140px;
+  right: -120px;
+  background: var(--tertiary);
 }
 
 .card {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 400px;
   background: var(--surface-container-lowest);
@@ -20,6 +52,18 @@
   flex-direction: column;
   gap: var(--space-xl);
   animation: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  overflow: hidden;
+}
+
+/* Aksen tipis di tepi atas kartu — jahitan biru→amber, jejak identitas brand */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--tertiary));
 }
 
 .iconWrapper {
@@ -32,6 +76,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto;
+  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.35);
 }
 
 .titleGroup {
@@ -85,7 +130,7 @@
 
 .input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0, 105, 69, 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
 }
 
 .inputError {
@@ -93,7 +138,7 @@
 }
 
 .inputError:focus {
-  box-shadow: 0 0 0 3px rgba(179, 27, 37, 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--error-rgb), 0.12);
 }
 
 .errorMsg {
@@ -120,12 +165,14 @@
   font-weight: 700;
   letter-spacing: 0.03em;
   cursor: pointer;
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.28);
+  transition: opacity var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .submitBtn:hover:not(:disabled) {
-  opacity: 0.9;
+  opacity: 0.94;
   transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.35);
 }
 
 .submitBtn:active:not(:disabled) {

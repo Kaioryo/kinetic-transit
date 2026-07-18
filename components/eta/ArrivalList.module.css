@@ -14,8 +14,9 @@
 }
 
 .emptyIcon {
-  font-size: 2.5rem;
+  display: inline-flex;
   margin-bottom: var(--space-lg);
+  color: var(--primary);
   animation: pulse-live 2s ease-in-out infinite;
 }
 

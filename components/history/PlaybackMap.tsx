@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from 'react'
 import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import { busIconMarkup } from '@/components/icons/Icons'
 
 export interface TracePoint {
   lat: number
@@ -32,9 +33,9 @@ function busIcon(): L.DivIcon {
     iconAnchor: [15, 15],
     html: `<div style="
       width:30px;height:30px;border-radius:50%;
-      background:#006945;border:3px solid #fff;
+      background:#045595;border:3px solid #fff;
       box-shadow:0 2px 8px rgba(0,0,0,.4);
-      display:flex;align-items:center;justify-content:center;font-size:15px;">🚌</div>`,
+      display:flex;align-items:center;justify-content:center;color:#fff;">${busIconMarkup(16)}</div>`,
   })
 }
 
@@ -72,11 +73,11 @@ export default function PlaybackMap({ trace, stops, position, traveledCount }: P
 
       {/* Seluruh jejak (samar) */}
       {full.length > 1 && (
-        <Polyline positions={full} pathOptions={{ color: '#4c5d6e', weight: 3, opacity: 0.35 }} />
+        <Polyline positions={full} pathOptions={{ color: '#4c6478', weight: 3, opacity: 0.35 }} />
       )}
       {/* Bagian yang sudah ditempuh (tegas) */}
       {traveled.length > 1 && (
-        <Polyline positions={traveled} pathOptions={{ color: '#006945', weight: 5, opacity: 0.9 }} />
+        <Polyline positions={traveled} pathOptions={{ color: '#045595', weight: 5, opacity: 0.9 }} />
       )}
 
       {/* Halte sebagai konteks */}
@@ -85,7 +86,7 @@ export default function PlaybackMap({ trace, stops, position, traveledCount }: P
           key={s.name}
           center={[s.lat, s.lng]}
           radius={5}
-          pathOptions={{ color: '#006945', weight: 2, fillColor: '#fff', fillOpacity: 1 }}
+          pathOptions={{ color: '#045595', weight: 2, fillColor: '#fff', fillOpacity: 1 }}
         />
       ))}
 

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { StopInfo } from '@/lib/store'
 import { haversineDistance } from '@/lib/geo-utils'
+import { CloseIcon } from '@/components/icons/Icons'
 import styles from './StopPicker.module.css'
 
 interface StopPickerProps {
@@ -53,7 +54,7 @@ export default function StopPicker({
         <div className={styles.header}>
           <h3 className={styles.title}>Pilih Halte</h3>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Tutup">
-            ✕
+            <CloseIcon size={16} />
           </button>
         </div>
 

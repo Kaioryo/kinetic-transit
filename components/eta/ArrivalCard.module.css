@@ -6,10 +6,12 @@
   width: 100%;
   background-color: var(--surface-container-lowest);
   border-radius: var(--radius-2xl);
-  padding: var(--space-xl);
+  padding: var(--space-xl) var(--space-xl) var(--space-xl) calc(var(--space-xl) - 3px);
   box-shadow: var(--shadow-ambient);
   /* Ghost border — felt, not seen */
-  border: 1px solid rgba(130, 184, 164, 0.08);
+  border: 1px solid rgba(var(--shadow-rgb), 0.06);
+  /* Aksen status: amber = akan tiba, merah = terlambat/berhenti, biru = normal */
+  border-left: 3px solid var(--accent, var(--primary));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -20,6 +22,7 @@
 }
 
 .card:hover {
+  transform: translateY(-2px);
   box-shadow: var(--shadow-elevated);
 }
 
@@ -61,8 +64,8 @@
   margin-left: 0.5em;
   padding: 0.1em 0.5em;
   border-radius: 999px;
-  background-color: var(--primary);
-  color: var(--surface-container-lowest);
+  background-color: var(--tertiary);
+  color: var(--on-tertiary);
   font-family: var(--font-label);
   font-size: 0.6rem;
   font-weight: 700;

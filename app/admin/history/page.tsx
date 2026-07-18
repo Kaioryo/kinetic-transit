@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { TracePoint, PlaybackStop } from '@/components/history/PlaybackMap'
+import { PlayIcon, PauseIcon } from '@/components/icons/Icons'
 import styles from './page.module.css'
 
 const PlaybackMap = dynamic(() => import('@/components/history/PlaybackMap'), {
@@ -182,7 +183,7 @@ export default function AdminHistoryPage() {
           {detail && (
             <div className={styles.controls}>
               <button className={styles.playBtn} onClick={togglePlay} aria-label={playing ? 'Jeda' : 'Putar'}>
-                {playing ? '⏸' : '▶'}
+                {playing ? <PauseIcon size={18} /> : <PlayIcon size={18} />}
               </button>
 
               <div className={styles.scrubWrap}>
@@ -193,6 +194,11 @@ export default function AdminHistoryPage() {
                   max={duration}
                   value={playbackMs}
                   onChange={(e) => setPlaybackMs(Number(e.target.value))}
+                  style={
+                    {
+                      '--progress': `${duration > 0 ? (playbackMs / duration) * 100 : 0}%`,
+                    } as React.CSSProperties
+                  }
                 />
                 <div className={styles.times}>
                   <span>{fmt(playbackMs)}</span>

@@ -23,9 +23,9 @@
   white-space: nowrap;
 }
 
-/* --- Data segar: ada bus yang aktif mengirim GPS --- */
+/* --- Data segar: ada bus yang aktif mengirim GPS (amber = "live") --- */
 .live .dot {
-  background-color: var(--primary);
+  background-color: var(--tertiary);
   animation: pulse-live 2s ease-in-out infinite;
 }
 

@@ -48,7 +48,7 @@ export default function Header({ geoStatus, onLocationClick }: HeaderProps) {
           onClick={onLocationClick}
           aria-label="Ke lokasi saya"
           title={denied ? 'Izin lokasi diblokir — klik untuk info' : 'Ke lokasi saya'}
-          style={denied ? { color: '#ba1a1a' } : undefined}
+          style={denied ? { color: 'var(--error)' } : undefined}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
