@@ -1,0 +1,230 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background: var(--surface, #f4fbf6);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.2rem;
+  background: var(--surface-container-lowest, #fff);
+  border-bottom: 1px solid rgba(0, 105, 69, 0.1);
+  flex-shrink: 0;
+}
+
+.back {
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary, #006945);
+  text-decoration: none;
+}
+
+.title {
+  font-family: var(--font-headline);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--on-surface, #171d1a);
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* --- Sidebar daftar trip --- */
+.sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  padding: 1rem;
+  overflow-y: auto;
+  border-right: 1px solid rgba(0, 105, 69, 0.1);
+  background: var(--surface-container-lowest, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sideTitle {
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--on-surface-variant, #4c5d6e);
+  margin-bottom: 0.25rem;
+}
+
+.empty {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--on-surface-variant, #4c5d6e);
+}
+
+.tripItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(0, 105, 69, 0.12);
+  background: var(--surface, #f4fbf6);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.tripItem:hover {
+  border-color: rgba(0, 105, 69, 0.4);
+}
+
+.tripActive {
+  border-color: var(--primary, #006945);
+  background: rgba(0, 105, 69, 0.06);
+}
+
+.tripRoute {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--on-surface, #171d1a);
+}
+
+.tripMeta {
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  color: var(--on-surface-variant, #4c5d6e);
+}
+
+/* --- Peta + kontrol --- */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.mapWrap {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
+
+.mapLoading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--on-surface-variant, #4c5d6e);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.2rem;
+  background: var(--surface-container-lowest, #fff);
+  border-top: 1px solid rgba(0, 105, 69, 0.1);
+  flex-shrink: 0;
+}
+
+.playBtn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary, #006945);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scrubWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.scrub {
+  width: 100%;
+  accent-color: var(--primary, #006945);
+  cursor: pointer;
+}
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  color: var(--on-surface-variant, #4c5d6e);
+}
+
+.curSpeed {
+  font-weight: 700;
+  color: var(--primary, #006945);
+}
+
+.speeds {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.speedBtn {
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 105, 69, 0.2);
+  background: transparent;
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--on-surface-variant, #4c5d6e);
+  cursor: pointer;
+}
+
+.speedActive {
+  background: var(--primary, #006945);
+  color: #fff;
+  border-color: var(--primary, #006945);
+}
+
+/* --- Responsif: mobile stack --- */
+@media (max-width: 720px) {
+  .body {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    max-height: 32vh;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 105, 69, 0.1);
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .sideTitle {
+    display: none;
+  }
+  .tripItem {
+    min-width: 200px;
+  }
+  .controls {
+    flex-wrap: wrap;
+  }
+}
