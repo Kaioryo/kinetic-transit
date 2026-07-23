@@ -1,9 +1,21 @@
 'use client'
 
+import { useEffect } from 'react'
 import { WifiOffIcon } from '@/components/icons/Icons'
 import styles from './offline.module.css'
 
 export default function OfflinePage() {
+  useEffect(() => {
+    // Begitu koneksi kembali, langsung reload otomatis — pengguna tidak perlu
+    // menekan "Coba Lagi" sama sekali. window.location.reload() dipakai (bukan
+    // location.href = url yang sama) karena address bar tetap di URL asli
+    // selama fallback ini ditampilkan oleh service worker, sehingga menimpa
+    // href dengan URL yang identik tidak dianggap navigasi baru oleh browser.
+    const handleOnline = () => window.location.reload()
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
+  }, [])
+
   return (
     <div className={styles.container}>
       <div className={styles.content}>
@@ -19,7 +31,7 @@ export default function OfflinePage() {
         </p>
         <button
           className={styles.retryButton}
-          onClick={() => (window.location.href = '/')}
+          onClick={() => window.location.reload()}
         >
           Coba Lagi
         </button>
