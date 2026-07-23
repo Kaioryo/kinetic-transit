@@ -19,7 +19,7 @@ export default function OfflinePage() {
         </p>
         <button
           className={styles.retryButton}
-          onClick={() => window.location.reload()}
+          onClick={() => (window.location.href = '/')}
         >
           Coba Lagi
         </button>
