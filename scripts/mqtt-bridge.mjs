@@ -47,6 +47,16 @@ const MQTT_PORT  = parseInt(process.env.MQTT_PORT || '1883')
 const USERNAME   = process.env.MQTT_USERNAME || ''
 const PASSWORD   = process.env.MQTT_PASSWORD || ''
 const TOPIC      = process.env.MQTT_TOPIC || 'kinetic-transit/gps'
+const MAX_SPEED_KMH = 999.99 // bus_locations.speed uses DECIMAL(5, 2).
+
+function parseTelemetryNumber(value) {
+  if (typeof value === 'number') return value
+  if (typeof value !== 'string') return NaN
+
+  const text = value.trim()
+  const decimal = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/
+  return decimal.test(text) ? Number(text) : NaN
+}
 
 // ─── Koneksi ke MQTT Broker ───────────────────────────────────────────────
 const client = mqtt.connect(BROKER_URL, {
@@ -59,38 +69,57 @@ const client = mqtt.connect(BROKER_URL, {
 })
 
 client.on('connect', () => {
-  console.log(`✅ MQTT Bridge terhubung ke ${BROKER_URL}`)
-  console.log(`📡 Subscribe ke topik: ${TOPIC}`)
+  console.log(`MQTT Bridge terhubung ke ${BROKER_URL}`)
+  console.log(`Subscribe ke topik: ${TOPIC}`)
   client.subscribe(TOPIC, { qos: 1 }, (err) => {
-    if (err) console.error('❌ Subscribe gagal:', err.message)
+    if (err) console.error('Subscribe gagal:', err.message)
   })
 })
 
 client.on('reconnect', () => {
-  console.log('🔄 Mencoba reconnect ke MQTT broker...')
+  console.log('Mencoba reconnect ke MQTT broker...')
 })
 
 client.on('error', (err) => {
-  console.error('❌ MQTT Error:', err.message)
+  console.error('MQTT Error:', err.message)
 })
 
 // ─── Handle Pesan Masuk dari ESP32 ────────────────────────────────────────
 client.on('message', async (topic, messageBuffer) => {
   const raw = messageBuffer.toString()
-  console.log(`📨 [${new Date().toLocaleTimeString('id-ID')}] Pesan dari ${topic}:`, raw)
+  console.log(`[${new Date().toLocaleTimeString('id-ID')}] Pesan dari ${topic}:`, raw)
 
   let payload
   try {
     payload = JSON.parse(raw)
   } catch {
-    console.warn('⚠️  Payload bukan JSON valid, dilewati.')
+    console.warn('Payload bukan JSON valid, dilewati.')
     return
   }
 
-  // Validasi field yang wajib ada
-  const { license_plate, latitude, longitude, speed } = payload
-  if (!license_plate || latitude == null || longitude == null) {
-    console.warn('⚠️  Payload tidak lengkap (butuh license_plate, latitude, longitude):', payload)
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    console.warn('Payload harus berupa objek JSON, dilewati.')
+    return
+  }
+
+  const { license_plate } = payload
+  if (typeof license_plate !== 'string' || license_plate.trim() === '') {
+    console.warn('Payload tidak memiliki pelat nomor yang valid, dilewati.')
+    return
+  }
+
+  const latitude = parseTelemetryNumber(payload.latitude)
+  const longitude = parseTelemetryNumber(payload.longitude)
+  const speed = payload.speed == null ? null : parseTelemetryNumber(payload.speed)
+
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    console.warn('Payload memiliki koordinat tidak valid, dilewati.')
+    return
+  }
+
+  if (speed !== null && (!Number.isFinite(speed) || speed < 0 || speed > MAX_SPEED_KMH)) {
+    console.warn('Payload memiliki kecepatan tidak valid, dilewati.')
     return
   }
 
@@ -98,7 +127,7 @@ client.on('message', async (topic, messageBuffer) => {
     // 1. Cari bus berdasarkan plat nomor
     const bus = await prisma.buses.findUnique({ where: { license_plate } })
     if (!bus) {
-      console.warn(`⚠️  Bus dengan plat "${license_plate}" tidak ditemukan di DB.`)
+      console.warn(`Bus dengan plat "${license_plate}" tidak ditemukan di DB.`)
       return
     }
 
@@ -107,7 +136,7 @@ client.on('message', async (topic, messageBuffer) => {
       where: { bus_id: bus.id, status: 'active' },
     })
     if (!activeTrip) {
-      console.warn(`⚠️  Tidak ada trip aktif untuk bus "${bus.name}" (${license_plate}).`)
+      console.warn(`Tidak ada trip aktif untuk bus "${bus.name}" (${license_plate}).`)
       return
     }
 
@@ -117,9 +146,9 @@ client.on('message', async (topic, messageBuffer) => {
     const saved = await prisma.bus_locations.create({
       data: {
         trip_id: activeTrip.id,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
-        speed: speed != null ? parseFloat(speed) : null,
+        latitude,
+        longitude,
+        speed,
         recorded_at: new Date(),
       },
     })
@@ -129,8 +158,8 @@ client.on('message', async (topic, messageBuffer) => {
     if (routeData) {
       await processLocation(prisma, {
         tripId: activeTrip.id,
-        lat: parseFloat(latitude),
-        lng: parseFloat(longitude),
+        lat: latitude,
+        lng: longitude,
         stops: routeData.stops,
         waypoints: routeData.waypoints,
         state: loggerState,
@@ -141,16 +170,16 @@ client.on('message', async (topic, messageBuffer) => {
     }
 
     console.log(
-      `✅ Disimpan → trip_id=${activeTrip.id} | lat=${saved.latitude} lng=${saved.longitude} | 🚌 ${bus.name}`
+      `Disimpan → trip_id=${activeTrip.id} | lat=${saved.latitude} lng=${saved.longitude} | ${bus.name}`
     )
   } catch (err) {
-    console.error('❌ Gagal menyimpan ke DB:', err.message)
+    console.error('Gagal menyimpan ke DB:', err.message)
   }
 })
 
 // ─── Graceful shutdown ─────────────────────────────────────────────────────
 process.on('SIGINT', async () => {
-  console.log('\n🛑 Shutting down MQTT Bridge...')
+  console.log('\nShutting down MQTT Bridge...')
   client.end()
   await prisma.$disconnect()
   process.exit(0)

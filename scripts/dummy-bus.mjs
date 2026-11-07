@@ -112,7 +112,7 @@ async function loadActiveTrips() {
     const source = waypoints ? 'waypoints' : 'stops'
 
     if (path.length < 2) {
-      console.warn(`⚠️  Trip ${trip.id} (${trip.buses.name}) punya <2 titik jalur, dilewati.`)
+      console.warn(`Trip ${trip.id} (${trip.buses.name}) punya <2 titik jalur, dilewati.`)
       continue
     }
     if (!tripStates.has(trip.id)) {
@@ -200,7 +200,7 @@ async function tick(trips) {
     })
 
     console.log(
-      `${stalled ? '⏸' : '🚌'} ${trip.buses.name} (trip ${trip.id}) [${state.source}] → lat=${lat.toFixed(6)} lng=${lng.toFixed(6)} | ${speed.toFixed(1)} km/j${stalled ? ' MOGOK' : ''} | seg ${state.segIndex}/${path.length}`
+      `${trip.buses.name} (trip ${trip.id}) [${state.source}] → lat=${lat.toFixed(6)} lng=${lng.toFixed(6)} | ${speed.toFixed(1)} km/j${stalled ? ' MOGOK' : ''} | seg ${state.segIndex}/${path.length}`
     )
   }
 }
@@ -209,20 +209,20 @@ async function tick(trips) {
 let running = true
 
 async function main() {
-  console.log('🎮 Dummy Bus Simulator dimulai. Ctrl+C untuk berhenti.')
+  console.log('Dummy Bus Simulator dimulai. Ctrl+C untuk berhenti.')
   let trips = await loadActiveTrips()
 
   if (trips.length === 0) {
-    console.warn('⚠️  Tidak ada trip aktif. Pastikan DB sudah di-seed & ada trip status="active".')
+    console.warn('Tidak ada trip aktif. Pastikan DB sudah di-seed & ada trip status="active".')
   } else {
-    console.log(`✅ Menggerakkan ${trips.length} bus di sepanjang halte aslinya.`)
+    console.log(`Menggerakkan ${trips.length} bus di sepanjang halte aslinya.`)
     console.log(`   Trip aktif: ${trips.map((t) => `${t.id}=${t.buses.name}`).join(', ')}`)
   }
   if (STALLED_TRIPS.size > 0) {
-    console.log(`⏸  Simulasi MOGOK untuk trip: ${[...STALLED_TRIPS].join(', ')} (GPS tetap kirim, speed 0)`)
+    console.log(`Simulasi MOGOK untuk trip: ${[...STALLED_TRIPS].join(', ')} (GPS tetap kirim, speed 0)`)
   }
   if (SLOW_KMH != null) {
-    console.log(`🐢 Simulasi MACET: semua bus merayap ${SLOW_KMH} km/jam`)
+    console.log(`Simulasi MACET: semua bus merayap ${SLOW_KMH} km/jam`)
   }
 
   let sinceReload = 0
@@ -235,7 +235,7 @@ async function main() {
       }
       if (trips.length > 0) await tick(trips)
     } catch (err) {
-      console.error('❌ Tick gagal:', err.message)
+      console.error('Tick gagal:', err.message)
     }
     sinceReload++
     await new Promise((r) => setTimeout(r, TICK_MS))
@@ -243,7 +243,7 @@ async function main() {
 }
 
 process.on('SIGINT', async () => {
-  console.log('\n🛑 Menghentikan Dummy Bus Simulator...')
+  console.log('\nMenghentikan Dummy Bus Simulator...')
   running = false
   await prisma.$disconnect()
   process.exit(0)

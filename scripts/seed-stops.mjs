@@ -109,7 +109,7 @@ const routeStopsData = [
 ]
 
 async function main() {
-  console.log('🔄 Update data halte & rute ke database...\n')
+  console.log('Update data halte & rute ke database...\n')
 
   // Upsert routes
   const routes = [
@@ -119,22 +119,22 @@ async function main() {
   ]
   for (const r of routes) {
     await prisma.routes.upsert({ where: { id: r.id }, update: r, create: r })
-    console.log(`  🛣️  Route ${r.id}: ${r.name}`)
+    console.log(`  Route ${r.id}: ${r.name}`)
   }
 
   // Upsert stops
-  console.log('\n📍 Menyimpan halte...')
+  console.log('\nMenyimpan halte...')
   for (const s of stopsData) {
     await prisma.stops.upsert({
       where: { id: s.id },
       update: { name: s.name, latitude: s.latitude, longitude: s.longitude },
       create: s,
     })
-    console.log(`  ✅ [${String(s.id).padStart(2,'0')}] ${s.name}`)
+    console.log(`  [${String(s.id).padStart(2,'0')}] ${s.name}`)
   }
 
   // Reset dan isi ulang route_stops
-  console.log('\n🔄 Memperbarui urutan halte per jalur...')
+  console.log('\nMemperbarui urutan halte per jalur...')
   await prisma.route_stops.deleteMany({})
   for (const rs of routeStopsData) {
     await prisma.route_stops.create({ data: rs })
@@ -145,13 +145,13 @@ async function main() {
   const jalurB = routeStopsData.filter(r => r.route_id === 2)
   const jalurC = routeStopsData.filter(r => r.route_id === 3)
 
-  console.log('\n🎉 Selesai! Ringkasan:')
-  console.log(`  🔵 Jalur A (Saintek) : ${jalurA.length} titik pemberhentian`)
-  console.log(`  🩷 Jalur B (Soshum)  : ${jalurB.length} titik pemberhentian`)
-  console.log(`  💚 Jalur C (Tengah)  : ${jalurC.length} titik pemberhentian`)
-  console.log(`  📦 Total stops       : ${stopsData.length} halte unik`)
+  console.log('\nSelesai! Ringkasan:')
+  console.log(`  Jalur A (Saintek) : ${jalurA.length} titik pemberhentian`)
+  console.log(`  Jalur B (Soshum)  : ${jalurB.length} titik pemberhentian`)
+  console.log(`  Jalur C (Tengah)  : ${jalurC.length} titik pemberhentian`)
+  console.log(`  Total stops       : ${stopsData.length} halte unik`)
 }
 
 main()
-  .catch(e => { console.error('❌ Error:', e.message); process.exit(1) })
+  .catch(e => { console.error('Error:', e.message); process.exit(1) })
   .finally(() => prisma.$disconnect())

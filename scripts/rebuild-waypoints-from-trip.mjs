@@ -26,7 +26,7 @@ function argValue(name, fallback = null) {
 
 const TRIP_ID = parseInt(argValue('trip'), 10)
 if (!Number.isFinite(TRIP_ID)) {
-  console.error('❌ Wajib: --trip=<id>. Contoh: npm run rebuild-waypoints -- --trip=34')
+  console.error('Wajib: --trip=<id>. Contoh: npm run rebuild-waypoints -- --trip=34')
   process.exit(1)
 }
 
@@ -69,7 +69,7 @@ function snapDistanceM(stop, waypoints) {
 async function main() {
   const trip = await prisma.trips.findUnique({ where: { id: TRIP_ID } })
   if (!trip) {
-    console.error(`❌ Trip ${TRIP_ID} tidak ditemukan.`)
+    console.error(`Trip ${TRIP_ID} tidak ditemukan.`)
     process.exit(1)
   }
   const routeId = parseInt(argValue('route', String(trip.route_id)), 10)
@@ -126,7 +126,7 @@ async function main() {
       `(buang ${dropGlitch} glitch, ${dropThin} terlalu rapat) | jarak tutup-loop ${Math.round(gapCloseM)}m`
   )
   if (pts.length < 20) {
-    console.error(`❌ Terlalu sedikit titik (${pts.length}) — jejak tidak layak. Batal.`)
+    console.error(`Terlalu sedikit titik (${pts.length}) — jejak tidak layak. Batal.`)
     process.exit(1)
   }
 
@@ -141,7 +141,7 @@ async function main() {
     const b = stops[(i + 1) % stops.length]
     const dOld = oldWaypoints ? Math.round(alongGap(a, b, oldWaypoints) * 1000) : null
     const dNew = Math.round(alongGap(a, b, pts) * 1000)
-    const flag = dOld && dOld > 2 * dNew ? '  ⬅ dulu membengkak' : ''
+    const flag = dOld && dOld > 2 * dNew ? '  dulu membengkak' : ''
     console.log(
       `  ${a.name.padEnd(26).slice(0, 26)} → ${b.name.padEnd(22).slice(0, 22)} : ` +
         `${String(dOld ?? '—').padStart(5)}  →  ${String(dNew).padStart(5)}${flag}`
@@ -153,7 +153,7 @@ async function main() {
     console.log(`\n(dry-run: routes.waypoints TIDAK diubah)`)
   } else {
     await prisma.routes.update({ where: { id: routeId }, data: { waypoints: pts } })
-    console.log(`\n✅ routes.waypoints rute "${route.name}" diganti dengan jejak asli (${pts.length} titik).`)
+    console.log(`\nroutes.waypoints rute "${route.name}" diganti dengan jejak asli (${pts.length} titik).`)
     console.log(`   Balikkan dengan: npm run fetch-waypoints`)
   }
 

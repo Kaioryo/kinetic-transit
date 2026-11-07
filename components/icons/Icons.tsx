@@ -13,7 +13,7 @@ interface IconProps {
   style?: React.CSSProperties
 }
 
-/** Pengganti 🚌 — bus, badan + jendela + dua roda. */
+/** Ikon bus dengan jendela dan dua roda. */
 export function BusIcon({ size = 20, className, style }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className={className} style={style}>
@@ -36,7 +36,7 @@ export function busIconMarkup(size = 18): string {
   </svg>`
 }
 
-/** Pengganti 📍 — pin lokasi/koordinat. */
+/** Ikon pin lokasi. */
 export function PinIcon({ size = 20, className, style }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} style={style}>
@@ -45,7 +45,7 @@ export function PinIcon({ size = 20, className, style }: IconProps) {
   )
 }
 
-/** Pengganti 🚏 — halte (ring+titik, meniru gaya marker halte di peta). */
+/** Ikon halte dengan lingkaran dan titik. */
 export function StopIcon({ size = 20, className, style }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={style}>
@@ -55,7 +55,7 @@ export function StopIcon({ size = 20, className, style }: IconProps) {
   )
 }
 
-/** Pengganti ⚠️/⚠ — peringatan. */
+/** Ikon peringatan. */
 export function WarningIcon({ size = 20, className, style }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={style}>
@@ -66,7 +66,7 @@ export function WarningIcon({ size = 20, className, style }: IconProps) {
   )
 }
 
-/** Pengganti ⏸ — jeda. */
+/** Ikon jeda. */
 export function PauseIcon({ size = 20, className, style }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} style={style}>
@@ -76,7 +76,7 @@ export function PauseIcon({ size = 20, className, style }: IconProps) {
   )
 }
 
-/** Pengganti ▶ — putar. */
+/** Ikon putar. */
 export function PlayIcon({ size = 20, className, style }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} style={style}>
@@ -94,7 +94,7 @@ export function CloseIcon({ size = 20, className, style }: IconProps) {
   )
 }
 
-/** Pengganti 📡 — sinyal terputus (wifi disilang). */
+/** Ikon sinyal terputus. */
 export function WifiOffIcon({ size = 20, className, style }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={style}>

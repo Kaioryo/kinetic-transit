@@ -42,7 +42,7 @@ async function fetchRoutePolyline(coords) {
 }
 
 async function main() {
-  console.log('🗺️  Mengambil polyline jalan asli per rute dari OSRM...\n')
+  console.log('Mengambil polyline jalan asli per rute dari OSRM...\n')
 
   const routes = await prisma.routes.findMany({
     include: {
@@ -61,7 +61,7 @@ async function main() {
     }))
 
     if (stops.length < 2) {
-      console.warn(`⚠️  Rute "${route.name}" punya <2 halte, dilewati.`)
+      console.warn(`Rute "${route.name}" punya <2 halte, dilewati.`)
       continue
     }
 
@@ -76,10 +76,10 @@ async function main() {
         data: { waypoints },
       })
       console.log(
-        `✅ "${route.name}": ${stops.length} halte → ${waypoints.length} titik polyline tersimpan.`
+        `"${route.name}": ${stops.length} halte → ${waypoints.length} titik polyline tersimpan.`
       )
     } catch (err) {
-      console.error(`❌ "${route.name}": gagal ambil OSRM (${err.message}). Kolom waypoints dibiarkan kosong (ETA fallback ke Opsi A).`)
+      console.error(`"${route.name}": gagal ambil OSRM (${err.message}). Kolom waypoints dibiarkan kosong (ETA fallback ke Opsi A).`)
     }
 
     // jeda kecil agar sopan ke demo server publik

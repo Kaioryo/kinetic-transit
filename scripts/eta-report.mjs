@@ -35,7 +35,7 @@ const SOURCE = argValue('source', 'field')
 const CSV_PATH = argValue('csv', 'eta-report.csv')
 
 if (!['field', 'simulated'].includes(SOURCE)) {
-  console.error(`❌ --source harus "field" atau "simulated" (diberi: "${SOURCE}")`)
+  console.error(`--source harus "field" atau "simulated" (diberi: "${SOURCE}")`)
   process.exit(1)
 }
 
@@ -187,7 +187,7 @@ console.log(`║  CSV data mentah → ${CSV_PATH} (${rows.length} baris)`)
 
 if (SOURCE === 'simulated') {
   console.log(`║`)
-  console.log(`║  ⚠️  PERINGATAN: ini data SIMULATOR, bukan bukti akurasi.`)
+  console.log(`║  PERINGATAN: ini data SIMULATOR, bukan bukti akurasi.`)
   console.log(`║      dummy-bus menyusuri polyline yang sama dengan yang dipakai`)
   console.log(`║      menghitung ETA, dan menuliskan sendiri kolom speed-nya —`)
   console.log(`║      jadi ia dinilai terhadap dirinya sendiri. JANGAN ditulis di`)
