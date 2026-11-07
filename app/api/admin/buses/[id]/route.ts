@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
+import { handleBusWriteError } from '@/lib/bus-write-error'
 
 function isAuthenticated(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   return cookieStore.get('admin_session')?.value === 'authenticated'
@@ -16,16 +17,19 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params
   const { name, license_plate, status } = await req.json()
 
-  const bus = await prisma.buses.update({
-    where: { id: parseInt(id) },
-    data: {
-      ...(name && { name }),
-      ...(license_plate && { license_plate }),
-      ...(status && { status }),
-    },
-  })
-
-  return NextResponse.json(bus)
+  try {
+    const bus = await prisma.buses.update({
+      where: { id: parseInt(id) },
+      data: {
+        ...(name && { name }),
+        ...(license_plate && { license_plate }),
+        ...(status && { status }),
+      },
+    })
+    return NextResponse.json(bus)
+  } catch (error) {
+    return handleBusWriteError(error)
+  }
 }
 
 // DELETE /api/admin/buses/[id] — hapus bus

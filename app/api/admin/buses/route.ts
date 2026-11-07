@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
+import { handleBusWriteError } from '@/lib/bus-write-error'
 
 function isAuthenticated(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   return cookieStore.get('admin_session')?.value === 'authenticated'
@@ -30,9 +31,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'name dan license_plate wajib diisi.' }, { status: 400 })
   }
 
-  const bus = await prisma.buses.create({
-    data: { name, license_plate, status: status || 'active' },
-  })
-
-  return NextResponse.json(bus, { status: 201 })
+  try {
+    const bus = await prisma.buses.create({
+      data: { name, license_plate, status: status || 'active' },
+    })
+    return NextResponse.json(bus, { status: 201 })
+  } catch (error) {
+    return handleBusWriteError(error)
+  }
 }

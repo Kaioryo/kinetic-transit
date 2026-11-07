@@ -147,19 +147,24 @@ export default function AdminDashboard() {
   async function handleSaveBus(e: React.FormEvent) {
     e.preventDefault()
     setBusMsg('')
-    const res = await fetch(editBus ? `/api/admin/buses/${editBus.id}` : '/api/admin/buses', {
-      method: editBus ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(busForm),
-    })
-    if (res.ok) {
+    const fallback = 'Gagal menyimpan data armada.'
+    try {
+      const res = await fetch(editBus ? `/api/admin/buses/${editBus.id}` : '/api/admin/buses', {
+        method: editBus ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(busForm),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        setBusMsg(`Error: ${typeof data?.error === 'string' ? data.error : fallback}`)
+        return
+      }
       setBusMsg(editBus ? 'Bus berhasil diperbarui.' : 'Bus berhasil ditambahkan.')
       setBusForm({ name: '', license_plate: '', status: 'active' })
       setEditBus(null)
       fetchAll()
-    } else {
-      const d = await res.json()
-      setBusMsg(`Error: ${d.error}`)
+    } catch {
+      setBusMsg(`Error: ${fallback}`)
     }
   }
 
@@ -484,7 +489,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {busMsg && (
-                  <p className={`${styles.msg} ${busMsg.startsWith('Error') ? styles.msgError : styles.msgSuccess}`}>
+                  <p role={busMsg.startsWith('Error') ? 'alert' : 'status'} className={`${styles.msg} ${busMsg.startsWith('Error') ? styles.msgError : styles.msgSuccess}`}>
                     {busMsg}
                   </p>
                 )}
