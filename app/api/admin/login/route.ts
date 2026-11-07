@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server'
+import { verifyAdminPassword } from '@/lib/admin-password.mjs'
 import { clearAdminSession, startAdminSession } from '@/lib/admin-session'
 
 export async function POST(req: Request) {
-  const { password } = await req.json()
-  const adminPassword = process.env.ADMIN_PASSWORD
+  const body = await req.json().catch(() => null)
+  const verified = await verifyAdminPassword(body?.password, process.env.ADMIN_PASSWORD_HASH)
 
-  // Fail-closed: tanpa ADMIN_PASSWORD yang diset, jangan pakai password default yang
-  // bisa ditebak — tolak login. (Sebelumnya ada fallback hardcoded; dihapus demi keamanan
-  // saat deploy publik.)
-  if (!adminPassword) {
+  if (verified === null) {
     return NextResponse.json(
-      { success: false, message: 'Server belum dikonfigurasi (ADMIN_PASSWORD belum diset).' },
+      { success: false, message: 'Kata sandi administrator belum dikonfigurasi.' },
       { status: 500 }
     )
   }
 
-  if (password !== adminPassword) {
+  if (!verified) {
     return NextResponse.json({ success: false, message: 'Password salah.' }, { status: 401 })
   }
 
