@@ -8,11 +8,12 @@ import * as etaLogger from '../lib/eta-logger.mjs'
 const source = await readFile(new URL('./mqtt-bridge.mjs', import.meta.url), 'utf8')
 const valid = { license_plate: 'UJI-LOKAL', latitude: -6.93, longitude: 107.77, speed: 15.2 }
 
-async function receive(raw, { busExists = true, tripExists = true } = {}) {
+async function receive(raw, { busExists = true, tripExists = true, databaseError } = {}) {
   const handlers = new Map()
   const calls = []
   const locations = []
   const predictions = []
+  const logs = []
   const warnings = []
   const errors = []
   const db = {
@@ -20,6 +21,7 @@ async function receive(raw, { busExists = true, tripExists = true } = {}) {
       findUnique: async ({ where }) => {
         calls.push('buses.findUnique')
         assert.equal(where.license_plate, valid.license_plate)
+        if (databaseError) throw databaseError
         return busExists ? { id: 1, name: 'Uji lokal' } : null
       },
     },
@@ -65,7 +67,11 @@ async function receive(raw, { busExists = true, tripExists = true } = {}) {
   }
 
   const context = createContext({
-    console: { log() {}, warn: (message) => warnings.push(message), error: (message) => errors.push(message) },
+    console: {
+      log: (...args) => logs.push(args),
+      warn: (...args) => warnings.push(args),
+      error: (...args) => errors.push(args),
+    },
     process: { env: {}, on() {} },
     setInterval() {},
   })
@@ -84,7 +90,7 @@ async function receive(raw, { busExists = true, tripExists = true } = {}) {
   })
   await bridge.evaluate()
   await handlers.get('message')('kinetic-transit/gps', Buffer.from(raw))
-  return { calls, locations, predictions, warnings, errors }
+  return { calls, locations, predictions, logs, warnings, errors }
 }
 
 const encode = (changes) => JSON.stringify({ ...valid, ...changes })
@@ -117,6 +123,7 @@ for (const [name, raw] of invalidCases) {
     assert.deepEqual(result.calls, [])
     assert.equal(result.locations.length, 0)
     assert.equal(result.predictions.length, 0)
+    assert.deepEqual(result.logs, [])
     assert.equal(result.warnings.length, 1)
     assert.deepEqual(result.errors, [])
   })
@@ -164,4 +171,23 @@ test('lewati armada tanpa perjalanan aktif', async () => {
   assert.deepEqual(result.calls, ['buses.findUnique', 'trips.findFirst'])
   assert.equal(result.locations.length, 0)
   assert.equal(result.predictions.length, 0)
+})
+
+test('log hanya memuat kategori penolakan, ID perjalanan, atau kode kesalahan', async () => {
+  const invalid = await receive('teks-pribadi-dari-pesan-rusak')
+  assert.deepEqual(invalid.logs, [])
+  assert.deepEqual(invalid.warnings, [['Payload bukan JSON valid, dilewati.']])
+
+  const notRegistered = await receive(encode({}), { busExists: false })
+  assert.deepEqual(notRegistered.warnings, [['Armada tidak terdaftar, pesan dilewati.']])
+
+  const notActive = await receive(encode({}), { tripExists: false })
+  assert.deepEqual(notActive.warnings, [['Armada tidak memiliki perjalanan aktif, pesan dilewati.']])
+
+  const saved = await receive(encode({}))
+  assert.deepEqual(saved.logs, [['Lokasi diproses untuk trip_id=2.']])
+
+  const databaseError = Object.assign(new Error('Nilai privat dari kueri basis data'), { code: 'P2002' })
+  const failure = await receive(encode({}), { databaseError })
+  assert.deepEqual(failure.errors, [['Gagal memproses lokasi: P2002.']])
 })

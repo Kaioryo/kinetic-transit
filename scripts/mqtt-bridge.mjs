@@ -1,9 +1,8 @@
 /**
  * MQTT Bridge Service — Kinetic Transit
  * 
- * Service ini berjalan secara paralel dengan Next.js dev server.
- * Ia subscribe ke topik MQTT broker (HiveMQ) dan menulis data GPS
- * yang dikirim ESP32 ke dalam database MySQL via Prisma.
+ * Layanan ini berjalan terpisah dari Next.js, berlangganan topik MQTT,
+ * dan menyimpan data GPS dari ESP32 ke TiDB melalui Prisma.
  * 
  * Jalankan dengan: node scripts/mqtt-bridge.mjs
  */
@@ -85,13 +84,10 @@ client.on('error', (err) => {
 })
 
 // ─── Handle Pesan Masuk dari ESP32 ────────────────────────────────────────
-client.on('message', async (topic, messageBuffer) => {
-  const raw = messageBuffer.toString()
-  console.log(`[${new Date().toLocaleTimeString('id-ID')}] Pesan dari ${topic}:`, raw)
-
+client.on('message', async (_topic, messageBuffer) => {
   let payload
   try {
-    payload = JSON.parse(raw)
+    payload = JSON.parse(messageBuffer.toString())
   } catch {
     console.warn('Payload bukan JSON valid, dilewati.')
     return
@@ -127,7 +123,7 @@ client.on('message', async (topic, messageBuffer) => {
     // 1. Cari bus berdasarkan plat nomor
     const bus = await prisma.buses.findUnique({ where: { license_plate } })
     if (!bus) {
-      console.warn(`Bus dengan plat "${license_plate}" tidak ditemukan di DB.`)
+      console.warn('Armada tidak terdaftar, pesan dilewati.')
       return
     }
 
@@ -136,14 +132,14 @@ client.on('message', async (topic, messageBuffer) => {
       where: { bus_id: bus.id, status: 'active' },
     })
     if (!activeTrip) {
-      console.warn(`Tidak ada trip aktif untuk bus "${bus.name}" (${license_plate}).`)
+      console.warn('Armada tidak memiliki perjalanan aktif, pesan dilewati.')
       return
     }
 
     // 3. Simpan koordinat ke tabel bus_locations.
     //    ETA tidak lagi dihitung di sini — cukup simpan lokasi, dan ETA
     //    dihitung on-read oleh GET /api/live (selalu segar, tidak bisa basi).
-    const saved = await prisma.bus_locations.create({
+    await prisma.bus_locations.create({
       data: {
         trip_id: activeTrip.id,
         latitude,
@@ -169,11 +165,13 @@ client.on('message', async (topic, messageBuffer) => {
       })
     }
 
-    console.log(
-      `Disimpan → trip_id=${activeTrip.id} | lat=${saved.latitude} lng=${saved.longitude} | ${bus.name}`
-    )
+    console.log(`Lokasi diproses untuk trip_id=${activeTrip.id}.`)
   } catch (err) {
-    console.error('Gagal menyimpan ke DB:', err.message)
+    if (typeof err?.code === 'string' && /^P\d{4}$/.test(err.code)) {
+      console.error(`Gagal memproses lokasi: ${err.code}.`)
+    } else {
+      console.error('Gagal memproses lokasi.')
+    }
   }
 })
 
