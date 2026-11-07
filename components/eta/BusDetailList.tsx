@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Shuttle, StopEta } from '@/lib/types'
+import type { Arrival, Shuttle, StopEta } from '@/lib/types'
 import { WarningIcon, BusIcon } from '@/components/icons/Icons'
 import styles from './BusDetailList.module.css'
 
@@ -16,15 +16,15 @@ interface BusStopRow {
   stop_name: string
   eta_minutes: number | null
   distance_km: number
-  status: 'on-time' | 'delayed' | 'arriving' | 'stopped'
+  status: Arrival['status']
   is_next: boolean
   just_passed: boolean
 }
 
-// Aksen kiri baris — sama seperti ArrivalCard: amber = akan tiba, merah = terlambat/berhenti.
+// Aksen kiri baris — sama seperti ArrivalCard: amber = akan tiba, merah = lambat/berhenti.
 function accentFor(status: BusStopRow['status']): string {
   if (status === 'arriving') return 'var(--tertiary)'
-  if (status === 'delayed' || status === 'stopped') return 'var(--error)'
+  if (status === 'slow' || status === 'stopped') return 'var(--error)'
   return 'var(--primary)'
 }
 
@@ -110,7 +110,7 @@ export default function BusDetailList({ shuttle, stopEtas }: BusDetailListProps)
                     color:
                       r.status === 'arriving'
                         ? 'var(--on-tertiary-container)'
-                        : r.status === 'delayed'
+                        : r.status === 'slow'
                           ? 'var(--error)'
                           : 'var(--on-surface)',
                   }}

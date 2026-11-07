@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { computeEtas, parseWaypoints, getMovementProfile } from '@/lib/eta-engine.mjs'
+import type { Arrival } from '@/lib/types'
 
 // GET /api/live — Query active trips + latest location, and compute ETAs on-read.
 //
@@ -53,24 +54,6 @@ type TripWithRoute = Prisma.tripsGetPayload<{
     }
   }
 }>
-
-type Arrival = {
-  shuttle_id: string
-  bus_name: string
-  route_id: number
-  route_code: string
-  route_name: string
-  route_type: string
-  /** null kalau bus berhenti (mogok/macet) — sengaja tidak menebak angka. */
-  eta_minutes: number | null
-  distance_km: number
-  shuttle_speed: number
-  status: 'on-time' | 'delayed' | 'arriving' | 'stopped'
-  is_next: boolean
-  just_passed: boolean
-  /** Sudah berapa lama bus berhenti; hanya terisi saat status 'stopped'. */
-  stopped_seconds: number | null
-}
 
 export async function GET() {
   try {
@@ -184,8 +167,8 @@ export async function GET() {
               : c.etaMinutes <= 1
                 ? 'arriving'
                 : movement.speedKmh < 8
-                  ? 'delayed'
-                  : 'on-time'
+                  ? 'slow'
+                  : 'normal'
 
             if (!arrivalsByStop.has(c.stop_id)) {
               const pt = stopPts.find((s) => s.stop_id === c.stop_id)!

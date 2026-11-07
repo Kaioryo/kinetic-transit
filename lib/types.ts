@@ -64,7 +64,7 @@ export interface Arrival {
   eta_minutes: number | null
   distance_km: number
   shuttle_speed: number
-  status: 'on-time' | 'delayed' | 'arriving' | 'stopped'
+  status: 'normal' | 'slow' | 'arriving' | 'stopped'
   is_next: boolean
   just_passed: boolean
   /** Sudah berapa lama bus berhenti; hanya terisi saat status 'stopped'. */

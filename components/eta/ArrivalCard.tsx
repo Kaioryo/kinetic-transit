@@ -18,10 +18,10 @@ function formatDuration(seconds: number): string {
 }
 
 // Aksen kiri kartu — menyampaikan urgensi status sekilas pandang, tanpa harus
-// membaca angkanya dulu (amber = akan tiba, merah = terlambat/berhenti).
+// membaca angkanya dulu (amber = akan tiba, merah = lambat/berhenti).
 function accentFor(status: Arrival['status']): string {
   if (status === 'arriving') return 'var(--tertiary)'
-  if (status === 'delayed' || status === 'stopped') return 'var(--error)'
+  if (status === 'slow' || status === 'stopped') return 'var(--error)'
   return 'var(--primary)'
 }
 
@@ -85,7 +85,7 @@ export default function ArrivalCard({ arrival: a, index }: ArrivalCardProps) {
                 color:
                   a.status === 'arriving'
                     ? 'var(--on-tertiary-container)'
-                    : a.status === 'delayed'
+                    : a.status === 'slow'
                       ? 'var(--error)'
                       : 'var(--on-surface)',
               }}
