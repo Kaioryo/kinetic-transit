@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { clearAdminSession, startAdminSession } from '@/lib/admin-session'
 
 export async function POST(req: Request) {
   const { password } = await req.json()
@@ -19,20 +19,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'Password salah.' }, { status: 401 })
   }
 
-  const cookieStore = await cookies()
-  cookieStore.set('admin_session', 'authenticated', {
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production', // HTTPS-only di produksi
-    maxAge: 60 * 60 * 8, // 8 jam
-    path: '/',
-  })
+  if (!(await startAdminSession())) {
+    return NextResponse.json(
+      { success: false, message: 'Sesi administrator belum dikonfigurasi.' },
+      { status: 500 }
+    )
+  }
 
   return NextResponse.json({ success: true })
 }
 
 export async function DELETE() {
-  const cookieStore = await cookies()
-  cookieStore.delete('admin_session')
+  await clearAdminSession()
   return NextResponse.json({ success: true })
 }

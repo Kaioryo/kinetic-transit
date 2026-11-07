@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
+import { hasAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 
 // POST /api/seed — Seed initial data into MySQL
 // Run once to populate buses, routes, stops, route_stops, and trips
 
 export async function POST() {
+  if (!(await hasAdminSession())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     // ─── 1. Seed Buses ─────────────────────────────────────────────────────────
     const busesData = [

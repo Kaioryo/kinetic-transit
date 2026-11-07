@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { hasAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { handleBusWriteError } from '@/lib/bus-write-error'
 
-function isAuthenticated(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  return cookieStore.get('admin_session')?.value === 'authenticated'
-}
-
 // PUT /api/admin/buses/[id] — edit bus
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const cookieStore = await cookies()
-  if (!isAuthenticated(cookieStore)) {
+  if (!(await hasAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -34,8 +29,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 // DELETE /api/admin/buses/[id] — hapus bus
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const cookieStore = await cookies()
-  if (!isAuthenticated(cookieStore)) {
+  if (!(await hasAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

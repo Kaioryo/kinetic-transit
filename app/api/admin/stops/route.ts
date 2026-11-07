@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { hasAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
-
-function isAuthenticated(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  return cookieStore.get('admin_session')?.value === 'authenticated'
-}
 
 function parseCoordinate(value: unknown) {
   if (typeof value === 'number') return value
@@ -14,8 +10,7 @@ function parseCoordinate(value: unknown) {
 
 // GET /api/admin/stops — list semua stops
 export async function GET() {
-  const cookieStore = await cookies()
-  if (!isAuthenticated(cookieStore)) {
+  if (!(await hasAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -46,8 +41,7 @@ export async function GET() {
 
 // POST /api/admin/stops — tambah stop baru
 export async function POST(req: Request) {
-  const cookieStore = await cookies()
-  if (!isAuthenticated(cookieStore)) {
+  if (!(await hasAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

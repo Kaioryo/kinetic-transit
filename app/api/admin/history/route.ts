@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { hasAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
-
-function isAuthenticated(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  return cookieStore.get('admin_session')?.value === 'authenticated'
-}
 
 // GET /api/admin/history — daftar perjalanan yang PUNYA rekaman GPS (untuk playback).
 // Admin-only. Hanya trip dengan cukup titik yang ditampilkan (menyaring mis-start).
 const MIN_POINTS = 10
 
 export async function GET() {
-  const cookieStore = await cookies()
-  if (!isAuthenticated(cookieStore)) {
+  if (!(await hasAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

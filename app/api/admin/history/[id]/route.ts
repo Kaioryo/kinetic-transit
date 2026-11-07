@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { hasAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
-
-function isAuthenticated(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  return cookieStore.get('admin_session')?.value === 'authenticated'
-}
 
 // GET /api/admin/history/[id] — jejak GPS lengkap satu perjalanan untuk playback.
 // Admin-only. Mengembalikan trace (urut waktu, offset ms dari awal) + halte rute.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const cookieStore = await cookies()
-  if (!isAuthenticated(cookieStore)) {
+  if (!(await hasAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

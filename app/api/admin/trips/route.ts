@@ -1,19 +1,14 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { hasAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 
 // Manajemen Perjalanan (trip) — INI YANG MENENTUKAN bus muncul di peta/ETA.
 // `trips.status = 'active'` adalah patokan /api/live: tanpa trip aktif, GPS dari
 // ESP32 tetap masuk ke bus_locations tapi bus TIDAK ditampilkan ke penumpang.
 
-function isAuthenticated(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  return cookieStore.get('admin_session')?.value === 'authenticated'
-}
-
 // GET /api/admin/trips — daftar trip (aktif dulu, lalu riwayat terbaru)
 export async function GET() {
-  const cookieStore = await cookies()
-  if (!isAuthenticated(cookieStore)) {
+  if (!(await hasAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -40,8 +35,7 @@ export async function GET() {
 
 // POST /api/admin/trips — mulai perjalanan baru (bus + jalur → trip aktif)
 export async function POST(req: Request) {
-  const cookieStore = await cookies()
-  if (!isAuthenticated(cookieStore)) {
+  if (!(await hasAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
