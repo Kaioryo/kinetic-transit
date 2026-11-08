@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { hasAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { handleBusWriteError } from '@/lib/bus-write-error'
@@ -36,13 +37,31 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const busId = parseInt(id)
 
-  // Selesaikan trip aktif dulu sebelum hapus bus
-  await prisma.trips.updateMany({
-    where: { bus_id: busId, status: 'active' },
-    data: { status: 'completed', ended_at: new Date() },
-  })
+  const conflict = () => NextResponse.json({
+    error: 'Armada masih dirujuk riwayat ETA dan tidak dapat dihapus.',
+  }, { status: 409 })
 
-  await prisma.buses.delete({ where: { id: busId } })
+  try {
+    const deleted = await prisma.$transaction(async (tx) => {
+      const history = await tx.eta_logs.findFirst({
+        where: { trip: { bus_id: busId } },
+        select: { id: true },
+      })
+      if (history) return false
 
-  return NextResponse.json({ success: true })
+      await tx.trips.updateMany({
+        where: { bus_id: busId, status: 'active' },
+        data: { status: 'completed', ended_at: new Date() },
+      })
+      await tx.buses.delete({ where: { id: busId } })
+      return true
+    })
+    return deleted ? NextResponse.json({ success: true }) : conflict()
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === 'P2003' || error.code === 'P2014')) {
+      return conflict()
+    }
+    throw error
+  }
 }

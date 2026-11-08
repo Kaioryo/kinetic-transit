@@ -5,8 +5,7 @@ generator client {
 datasource db {
   provider     = "mysql"
   url          = env("DATABASE_URL")
-  // FK diemulasi di level aplikasi (Prisma), bukan constraint DB. Aman & disarankan
-  // untuk MySQL serverless (TiDB/PlanetScale). Semua relasi sudah punya @@index.
+  // FK fisik untuk log ETA dan halte target dikelola melalui SQL di prisma/sql.
   relationMode = "prisma"
 }
 
@@ -63,8 +62,11 @@ model eta_logs {
   // di laporan. Tanpa kolom ini, satu kali `npm run dummy-bus` akan diam-diam mencemari
   // data evaluasi dan tidak bisa dipisahkan lagi.
   source            String    @default("simulated") @db.VarChar(16) // "simulated" | "field"
+  trip              trips     @relation(fields: [trip_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_eta_logs_trip")
+  stop              stops     @relation(fields: [stop_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_eta_logs_stop")
 
   @@index([trip_id, stop_id], map: "idx_eta_logs_trip_stop")
+  @@index([stop_id], map: "idx_eta_logs_stop")
   @@index([source], map: "idx_eta_logs_source")
 }
 
@@ -84,6 +86,8 @@ model stops {
   latitude    Decimal       @db.Decimal(10, 8)
   longitude   Decimal       @db.Decimal(11, 8)
   route_stops route_stops[]
+  eta_logs    eta_logs[]
+  target_trips trips[]
 }
 
 model trips {
@@ -97,7 +101,10 @@ model trips {
   bus_locations       bus_locations[]
   buses               buses           @relation(fields: [bus_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_trips_bus")
   routes              routes          @relation(fields: [route_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_trips_route")
+  next_target_stop    stops?          @relation(fields: [next_target_stop_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_trips_next_target_stop")
+  eta_logs            eta_logs[]
 
   @@index([bus_id], map: "fk_trips_bus")
   @@index([route_id], map: "fk_trips_route")
+  @@index([next_target_stop_id], map: "idx_trips_next_target_stop")
 }

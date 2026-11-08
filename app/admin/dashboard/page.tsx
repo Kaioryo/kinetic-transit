@@ -54,6 +54,8 @@ export default function AdminDashboard() {
 
   // Modal konfirmasi hapus
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'stop' | 'bus'; id: number; name: string } | null>(null)
+  const [deleteError, setDeleteError] = useState('')
+  const [deletePending, setDeletePending] = useState(false)
 
   // Koordinat yang diklik di peta (untuk form tambah halte)
   const [pickedCoord, setPickedCoord] = useState<{ lat: number; lng: number } | null>(null)
@@ -206,14 +208,32 @@ export default function AdminDashboard() {
   }
 
   // ── Hapus ─────────────────────────────────────────────────────────────────
+  function closeDelete() {
+    setDeleteTarget(null)
+    setDeleteError('')
+  }
+
   async function confirmDelete() {
-    if (!deleteTarget) return
+    if (!deleteTarget || deletePending) return
     const url = deleteTarget.type === 'stop'
       ? `/api/admin/stops/${deleteTarget.id}`
       : `/api/admin/buses/${deleteTarget.id}`
-    await fetch(url, { method: 'DELETE' })
-    setDeleteTarget(null)
-    fetchAll()
+    setDeleteError('')
+    setDeletePending(true)
+    try {
+      const response = await fetch(url, { method: 'DELETE' })
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        setDeleteError(typeof result?.error === 'string' ? result.error : 'Penghapusan gagal.')
+        return
+      }
+      closeDelete()
+      fetchAll()
+    } catch {
+      setDeleteError('Penghapusan gagal. Coba lagi.')
+    } finally {
+      setDeletePending(false)
+    }
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -681,7 +701,7 @@ export default function AdminDashboard() {
       {/* ── Modal Konfirmasi Hapus ── */}
       {deleteTarget && (
         <>
-          <div className={styles.modalBackdrop} onClick={() => setDeleteTarget(null)} />
+          <div className={styles.modalBackdrop} onClick={() => { if (!deletePending) closeDelete() }} />
           <div className={styles.modal}>
             <div className={styles.modalIcon}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -694,9 +714,10 @@ export default function AdminDashboard() {
               {deleteTarget.type === 'stop' && ' Halte ini juga akan dihapus dari semua jalur rute.'}
               {deleteTarget.type === 'bus' && ' Trip aktif bus ini akan diakhiri.'}
             </p>
+            {deleteError && <p role="alert" className={`${styles.msg} ${styles.msgError}`}>{deleteError}</p>}
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => setDeleteTarget(null)}>Batal</button>
-              <button className={styles.deleteConfirmBtn} onClick={confirmDelete}>Ya, Hapus</button>
+              <button className={styles.cancelBtn} onClick={closeDelete} disabled={deletePending}>Batal</button>
+              <button className={styles.deleteConfirmBtn} onClick={confirmDelete} disabled={deletePending}>Ya, Hapus</button>
             </div>
           </div>
         </>

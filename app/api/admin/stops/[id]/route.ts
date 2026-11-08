@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { hasAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 
@@ -31,17 +32,25 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const stopId = parseInt(id)
+  const conflict = () => NextResponse.json({
+    error: 'Halte masih dirujuk riwayat ETA dan tidak dapat dihapus.',
+  }, { status: 409 })
 
   try {
-    await prisma.$transaction(async (tx) => {
+    const deleted = await prisma.$transaction(async (tx) => {
+      const history = await tx.eta_logs.findFirst({
+        where: { stop_id: stopId },
+        select: { id: true },
+      })
+      if (history) return false
+
       // 1. Ambil data route_stops yang dimiliki halte ini sebelum dihapus
       const routeStops = await tx.route_stops.findMany({
         where: { stop_id: stopId }
       })
 
-      // 2. Cascade: hapus route_stops & log ETA dulu, lalu stop-nya
+      // 2. Hapus hubungan rute sebelum menghapus halte.
       await tx.route_stops.deleteMany({ where: { stop_id: stopId } })
-      await tx.eta_logs.deleteMany({ where: { stop_id: stopId } })
       await tx.stops.delete({ where: { id: stopId } })
 
       // 3. Tutup jarak (gap) urutan untuk setiap jalur yang terdampak
@@ -62,10 +71,15 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
           })
         }
       }
+      return true
     })
 
-    return NextResponse.json({ success: true })
+    return deleted ? NextResponse.json({ success: true }) : conflict()
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === 'P2003' || error.code === 'P2014')) {
+      return conflict()
+    }
     console.error('Error delete stop:', error)
     const message = error instanceof Error ? error.message : 'Internal Server Error'
     return NextResponse.json({ error: message }, { status: 500 })
