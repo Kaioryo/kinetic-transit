@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import { computeEtas, parseWaypoints, getMovementProfile } from '@/lib/eta-engine.mjs'
+import { parseWaypoints, getMovementProfile } from '@/lib/eta-engine.mjs'
+import { getLiveStopEtas } from '@/lib/live-route-progress.mjs'
 import type { Arrival } from '@/lib/types'
 
 // GET /api/live — Query active trips + latest location, and compute ETAs on-read.
@@ -84,7 +85,7 @@ export async function GET() {
       activeTrips.map(async (trip) => {
         const latestLocation = await prisma.bus_locations.findFirst({
           where: { trip_id: trip.id },
-          orderBy: { recorded_at: 'desc' },
+          orderBy: [{ recorded_at: 'desc' }, { id: 'desc' }],
         })
 
         const busLat = latestLocation ? Number(latestLocation.latitude) : 0
@@ -103,7 +104,7 @@ export async function GET() {
 
         const orderedStops = trip.routes.route_stops
         // Bus basi TIDAK boleh menyumbang ETA — posisinya sudah tidak dapat dipercaya.
-        if (!isStale && latestLocation && orderedStops.length > 0) {
+        if (!isStale && latestLocation && lastSeenMs !== null && orderedStops.length > 0) {
           const stopPts = orderedStops.map((rs) => ({
             stop_id: rs.stop_id,
             name: rs.stops.name,
@@ -112,9 +113,9 @@ export async function GET() {
           }))
           const waypoints = parseWaypoints(trip.routes.waypoints)
 
-          const computed = computeEtas({
-            busLat,
-            busLng,
+          const { etas: computed, nextStopId, passedStopId } = getLiveStopEtas({
+            latestLocation: { lat: busLat, lng: busLng, time: lastSeenMs },
+            recentLocations: movement.recentLocations,
             speedKmh: movement.speedKmh,
             stops: stopPts,
             waypoints,
@@ -128,34 +129,6 @@ export async function GET() {
           for (const c of computed) {
             const prev = nearestPerStop.get(c.stop_id)
             if (!prev || c.distanceKm < prev.distanceKm) nearestPerStop.set(c.stop_id, c)
-          }
-
-          // Penanda is_next / just_passed HARUS diturunkan dari jarak polyline yang
-          // sama dengan yang dipakai menghitung ETA — kalau tidak, keduanya bisa
-          // bertentangan. (Dulu ini memakai trips.next_target_stop_id dari eta-logger,
-          // yang menganggap bus "tiba" saat masih 80m SEBELUM halte; akibatnya halte
-          // yang sedang didekati bus salah dicap "baru dilewati" padahal ETA-nya
-          // masih "arriving".)
-          //
-          // Pada rute melingkar: jarak maju TERKECIL = halte berikutnya; jarak maju
-          // TERBESAR = halte yang baru saja ditinggalkan (harus memutar satu putaran
-          // penuh untuk kembali ke sana).
-          const entries = [...nearestPerStop.values()]
-          let isNextStopId: number | null = null
-          let justPassedStopId: number | null = null
-          if (entries.length > 0) {
-            let minC = entries[0]
-            let maxC = entries[0]
-            for (const c of entries) {
-              if (c.distanceKm < minC.distanceKm) minC = c
-              if (c.distanceKm > maxC.distanceKm) maxC = c
-            }
-            isNextStopId = minC.stop_id
-            // Butuh minimal 2 halte agar "baru dilewati" bermakna dan tidak
-            // menabrak halte yang sama dengan is_next.
-            if (entries.length > 1 && maxC.stop_id !== minC.stop_id) {
-              justPassedStopId = maxC.stop_id
-            }
           }
 
           for (const c of nearestPerStop.values()) {
@@ -193,8 +166,8 @@ export async function GET() {
               distance_km: Math.round(c.distanceKm * 100) / 100,
               shuttle_speed: Math.round(rawSpeed * 10) / 10,
               status,
-              is_next: c.stop_id === isNextStopId,
-              just_passed: c.stop_id === justPassedStopId,
+              is_next: c.stop_id === nextStopId,
+              just_passed: c.stop_id === passedStopId,
               stopped_seconds: movement.stoppedSeconds,
             })
           }
