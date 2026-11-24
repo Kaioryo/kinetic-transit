@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import { parseWaypoints, getMovementProfile } from '@/lib/eta-engine.mjs'
+import { etaSecondsFor, getMovementProfile, parseWaypoints } from '@/lib/eta-engine.mjs'
 import { getLiveStopEtas } from '@/lib/live-route-progress.mjs'
 import type { Arrival } from '@/lib/types'
 
@@ -41,6 +41,7 @@ import type { Arrival } from '@/lib/types'
 
 // ESP32 mengirim tiap ~3-5 detik; 45 detik ≈ 9-15 ping terlewat.
 const STALE_THRESHOLD_MS = 45_000
+const ARRIVING_THRESHOLD_SECONDS = 60
 
 type TripWithRoute = Prisma.tripsGetPayload<{
   include: {
@@ -132,12 +133,11 @@ export async function GET() {
           }
 
           for (const c of nearestPerStop.values()) {
-            // Status & angka menit harus lahir dari kecepatan yang SAMA dengan yang
-            // dipakai menghitung ETA (movement.speedKmh), bukan dari kecepatan sesaat
-            // — kalau tidak, label dan angkanya bisa saling bertentangan.
+            // Status memakai ETA sebelum pembulatan; angka pada panel tetap dalam menit.
+            const etaSeconds = etaSecondsFor(c.distanceKm, movement.speedKmh)
             const status: Arrival['status'] = movement.isStopped
               ? 'stopped'
-              : c.etaMinutes <= 1
+              : etaSeconds <= ARRIVING_THRESHOLD_SECONDS
                 ? 'arriving'
                 : movement.speedKmh < 8
                   ? 'slow'
