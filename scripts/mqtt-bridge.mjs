@@ -46,7 +46,7 @@ const MQTT_PORT  = parseInt(process.env.MQTT_PORT || '1883')
 const USERNAME   = process.env.MQTT_USERNAME || ''
 const PASSWORD   = process.env.MQTT_PASSWORD || ''
 const TOPIC      = process.env.MQTT_TOPIC || 'kinetic-transit/gps'
-const MAX_SPEED_KMH = 999.99 // bus_locations.speed uses DECIMAL(5, 2).
+const MAX_SHUTTLE_SPEED_KMH = 30 // Batas umum kecepatan kendaraan di lingkungan Unpad.
 
 function parseTelemetryNumber(value) {
   if (typeof value === 'number') return value
@@ -106,7 +106,7 @@ client.on('message', async (_topic, messageBuffer) => {
 
   const latitude = parseTelemetryNumber(payload.latitude)
   const longitude = parseTelemetryNumber(payload.longitude)
-  const speed = payload.speed == null ? null : parseTelemetryNumber(payload.speed)
+  let speed = payload.speed == null ? null : parseTelemetryNumber(payload.speed)
 
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
       !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
@@ -114,9 +114,14 @@ client.on('message', async (_topic, messageBuffer) => {
     return
   }
 
-  if (speed !== null && (!Number.isFinite(speed) || speed < 0 || speed > MAX_SPEED_KMH)) {
+  if (speed !== null && (!Number.isFinite(speed) || speed < 0)) {
     console.warn('Payload memiliki kecepatan tidak valid, dilewati.')
     return
+  }
+
+  if (speed !== null && speed > MAX_SHUTTLE_SPEED_KMH) {
+    console.warn('Kecepatan melebihi batas shuttle, koordinat tetap diproses.')
+    speed = null
   }
 
   try {

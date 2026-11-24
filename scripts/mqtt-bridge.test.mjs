@@ -107,6 +107,7 @@ const invalidCases = [
   ['latitude di bawah -90', encode({ latitude: -90.01 })],
   ['longitude di atas 180', encode({ longitude: 180.01 })],
   ['longitude di bawah -180', encode({ longitude: -180.01 })],
+  ['koordinat tidak valid meskipun kecepatan di atas batas', encode({ longitude: 180.01, speed: 30.01 })],
   ['koordinat dengan akhiran teks', encode({ latitude: '-6.93xyz' })],
   ['koordinat boolean', encode({ longitude: true })],
   ['koordinat NaN berbentuk teks', encode({ longitude: 'NaN' })],
@@ -114,7 +115,6 @@ const invalidCases = [
   ['angka JSON tidak berhingga', encode({ speed: 'OVERFLOW' }).replace('"OVERFLOW"', '1e309')],
   ['kecepatan negatif', encode({ speed: -0.01 })],
   ['kecepatan berupa teks bukan angka', encode({ speed: 'cepat' })],
-  ['kecepatan di luar kapasitas kolom', encode({ speed: 1000 })],
 ]
 
 for (const [name, raw] of invalidCases) {
@@ -135,18 +135,24 @@ const validCases = [
   ['kecepatan nol', { speed: 0 }, [-6.93, 107.77, 0]],
   ['kecepatan null', { speed: null }, [-6.93, 107.77, null]],
   ['kecepatan tidak dikirim', { speed: undefined }, [-6.93, 107.77, null]],
-  ['batas koordinat atas dan kecepatan maksimum', { latitude: 90, longitude: 180, speed: 999.99 }, [90, 180, 999.99]],
+  ['batas koordinat atas dan kecepatan tepat 30 km/jam', { latitude: 90, longitude: 180, speed: 30 }, [90, 180, 30]],
+  ['kecepatan sedikit di bawah batas', { speed: 29.99 }, [-6.93, 107.77, 29.99]],
+  ['kecepatan 30,01 km/jam', { speed: 30.01 }, [-6.93, 107.77, null], true],
+  ['teks angka di atas batas kecepatan', { speed: '3.01e1' }, [-6.93, 107.77, null], true],
+  ['kecepatan di luar kapasitas kolom', { speed: 1000 }, [-6.93, 107.77, null], true],
   ['batas koordinat bawah', { latitude: -90, longitude: -180 }, [-90, -180, 15.2]],
 ]
 
-for (const [name, changes, expected] of validCases) {
+for (const [name, changes, expected, overSpeed = false] of validCases) {
   test(`proses ${name} melalui penyimpanan lokasi dan pencatatan ETA`, async () => {
     const result = await receive(encode(changes))
     assert.deepEqual(result.calls, [
       'buses.findUnique', 'trips.findFirst', 'bus_locations.create', 'routes.findUnique',
       'trips.update', 'bus_locations.findMany', 'eta_logs.create',
     ])
-    assert.deepEqual(result.warnings, [])
+    assert.deepEqual(result.warnings, overSpeed
+      ? [['Kecepatan melebihi batas shuttle, koordinat tetap diproses.']]
+      : [])
     assert.deepEqual(result.errors, [])
     assert.equal(result.locations.length, 1)
     const { trip_id, latitude, longitude, speed, recorded_at } = result.locations[0]
